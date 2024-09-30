@@ -25,4 +25,4 @@ jobs:
           CLUSTER: dev-gcp # Replace
           RESOURCE: .nais/app.yaml # This points to the file we created in the previous step
           VAR: image=${{ steps.docker-build-push.outputs.image }}
-          VAR: image=${{ steps.docker-build-push.outputs.telemetry }}
+          TELEMETRY: ${{ steps.docker-build-push.outputs.telemetry }}
