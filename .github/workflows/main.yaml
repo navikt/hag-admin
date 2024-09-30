@@ -12,17 +12,24 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21.x'
+          cache: 'gradle'
+      - name: test and build
+        run: ./gradlew build
       - name: Push docker image to GAR
         uses: nais/docker-build-push@v0
         id: docker-build-push
         with:
-          team: helsearbeidsgiver # Replace
+          team: helsearbeidsgiver
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }} # Provided as Organization Secret
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }} # Provided as Organization Variable
       - name: Deploy to NAIS
         uses: nais/deploy/actions/deploy@v2
         env:
-          CLUSTER: dev-gcp # Replace
+          CLUSTER: dev-gcp
           RESOURCE: .nais/app.yaml # This points to the file we created in the previous step
           VAR: image=${{ steps.docker-build-push.outputs.image }}
           TELEMETRY: ${{ steps.docker-build-push.outputs.telemetry }}
