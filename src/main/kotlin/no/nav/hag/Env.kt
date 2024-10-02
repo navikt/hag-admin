@@ -16,7 +16,6 @@ object Env {
         )
 
     fun isTestMode() : Boolean {
-        return true // inntil vi har satt opp tilganger etc i NAIS..
-        // return clusterName == defaultClusterName
+        return clusterName == defaultClusterName
     }
 }
