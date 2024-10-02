@@ -13,6 +13,7 @@ class NotifikasjonServiceImpl : NotifikasjonService {
     override suspend fun ferdigstillOppgave(oppgaveId: String) {
         klient.oppgaveUtfoert(oppgaveId)
     }
+
     private fun buildNotifikasjonKlient(): ArbeidsgiverNotifikasjonKlient {
         val tokenGetter = oauth2ClientCredentialsTokenGetter(Env.oauth2Environment)
         return ArbeidsgiverNotifikasjonKlient(Env.notifikasjonUrl, tokenGetter)
