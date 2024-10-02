@@ -3,11 +3,25 @@ kind: Application
 metadata:
   name: hag-admin
   namespace: helsearbeidsgiver
+env:
+  - name: ARBEIDSGIVER_NOTIFIKASJON_API_URL
+    value: "http://notifikasjon-produsent-api.fager/api/graphql"
+  - name: ARBEIDSGIVER_NOTIFIKASJON_SCOPE
+    value: "api://dev-gcp.fager.notifikasjon-produsent-api/.default"
 spec:
+  azure:
+    application:
+      enabled: true
   ingresses:
     - https://hag-admin.intern.dev.nav.no
   image: {{image}}
   port: 8080
+  accessPolicy:
+    outbound:
+      external:
+        rules:
+          - application: notifikasjon-produsent-api
+            namespace: fager
   replicas:
     max: 1
     min: 1
