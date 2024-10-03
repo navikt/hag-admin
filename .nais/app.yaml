@@ -7,6 +7,12 @@ spec:
   azure:
     application:
       enabled: true
+      sidecar:
+        enabled: true
+      allowAllUsers: false
+      claims:
+        groups:
+          -id: "e3ab1801-e5a6-48ca-9c3b-5a91ce182c57"
   accessPolicy:
     outbound:
       rules:

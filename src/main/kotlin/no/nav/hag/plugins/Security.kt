@@ -1,31 +1,25 @@
 package no.nav.hag.plugins
 
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
+
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
-import io.ktor.server.response.*
+import no.nav.hag.Env
+import no.nav.security.token.support.v2.IssuerConfig
+import no.nav.security.token.support.v2.TokenSupportConfig
+import no.nav.security.token.support.v2.tokenValidationSupport
 
 fun Application.configureSecurity() {
-    // Please read the jwt property from the config file if you are using EngineMain
-    val jwtAudience = "jwt-audience"
-    val jwtDomain = "https://jwt-provider-domain/"
-    val jwtRealm = "ktor sample app"
-    val jwtSecret = "secret"
-    authentication {
-        jwt {
-            realm = jwtRealm
-            verifier(
-                JWT
-                    .require(Algorithm.HMAC256(jwtSecret))
-                    .withAudience(jwtAudience)
-                    .withIssuer(jwtDomain)
-                    .build()
+    val config =
+        TokenSupportConfig(
+            IssuerConfig(
+                name = "employee",
+                discoveryUrl = Env.oauth2Environment.wellKnownUrl,
+                acceptedAudience = listOf(Env.oauth2Environment.clientId),
             )
-            validate { credential ->
-                if (credential.payload.audience.contains(jwtAudience)) JWTPrincipal(credential.payload) else null
-            }
-        }
+        )
+    authentication {
+        tokenValidationSupport(
+            config = config,
+        )
     }
 }
