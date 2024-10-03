@@ -1,6 +1,7 @@
 package no.nav.hag
 
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
+import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.enums.SaksStatus
 import no.nav.helsearbeidsgiver.tokenprovider.oauth2ClientCredentialsTokenGetter
 import org.slf4j.LoggerFactory
 
@@ -15,7 +16,8 @@ class NotifikasjonServiceImpl : NotifikasjonService {
 
     override suspend fun ferdigstillOppgave(oppgaveId: String) {
         logger.info("Ferdigstiller oppgave $oppgaveId")
-        klient.oppgaveUtfoert(oppgaveId)
+       // klient.oppgaveUtfoert(oppgaveId)
+        klient.nyStatusSak(oppgaveId, SaksStatus.FERDIG, "Utgått")
     }
 
     private fun buildNotifikasjonKlient(): ArbeidsgiverNotifikasjonKlient {
