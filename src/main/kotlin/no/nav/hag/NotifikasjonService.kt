@@ -17,7 +17,8 @@ class NotifikasjonServiceImpl : NotifikasjonService {
     override suspend fun ferdigstillOppgave(oppgaveId: String) {
         logger.info("Ferdigstiller oppgave $oppgaveId")
        // klient.oppgaveUtfoert(oppgaveId)
-        klient.nyStatusSak(oppgaveId, SaksStatus.FERDIG, "Utgått")
+        logger.info("Logget inn som: ${klient.whoami()}")
+        //klient.nyStatusSak(oppgaveId, SaksStatus.FERDIG, "Utgått")
     }
 
     private fun buildNotifikasjonKlient(): ArbeidsgiverNotifikasjonKlient {
