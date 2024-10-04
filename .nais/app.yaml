@@ -6,14 +6,16 @@ metadata:
 spec:
   azure:
     application:
+      enabled: true
+      {{#if login}}
       allowAllUsers: false
       claims:
         groups:
           - id: e3ab1801-e5a6-48ca-9c3b-5a91ce182c57
-      enabled: true
     sidecar:
       enabled: true
       autoLogin: true
+    {{/if}}
   accessPolicy:
     outbound:
       rules:
@@ -22,10 +24,14 @@ spec:
   env:
     - name: ARBEIDSGIVER_NOTIFIKASJON_API_URL
       value: "http://notifikasjon-produsent-api.fager/api/graphql"
-    - name: ARBEIDSGIVER_NOTIFIKASJON_SCOPE
-      value: "api://dev-gcp.fager.notifikasjon-produsent-api/.default"
+    {{#each env as |var|}}
+    - name: {{ var.name }}
+      value: "{{ var.value }}"
+    {{/each }}
   ingresses:
-    - https://hag-admin.intern.dev.nav.no
+    {{#each ingresses as |url|}}
+      - {{ url }}
+    {{/each}}
   image: {{image}}
   port: 8080
   replicas:

@@ -1,0 +1,6 @@
+login: false
+env:
+  - name: ARBEIDSGIVER_NOTIFIKASJON_SCOPE
+    value: "api://dev-gcp.fager.notifikasjon-produsent-api/.default"
+ingresses:
+  - https://hag-admin.intern.dev.nav.no
