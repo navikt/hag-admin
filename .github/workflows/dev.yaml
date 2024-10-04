@@ -1,8 +1,8 @@
-name: Build and deploy to prod
+name: Build and deploy to dev
 on:
   push:
     branches:
-      - main
+      - dev
 
 env:
   ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}
@@ -30,11 +30,11 @@ jobs:
           team: helsearbeidsgiver
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }} # Provided as Organization Secret
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }} # Provided as Organization Variable
-      - name: Deploy to NAIS PROD
+      - name: Deploy to NAIS DEV
         uses: nais/deploy/actions/deploy@v2
         env:
-          CLUSTER: prod-gcp
+          CLUSTER: dev-gcp
           RESOURCE: .nais/app.yaml # This points to the file we created in the previous step
           VAR: image=${{ steps.docker-build-push.outputs.image }}
-          VARS: .nais/prod.yaml
+          VARS: .nais/dev.yaml
           TELEMETRY: ${{ steps.docker-build-push.outputs.telemetry }}
