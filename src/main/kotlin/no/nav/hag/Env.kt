@@ -14,6 +14,10 @@ object Env {
             clientJwk = System.getenv("AZURE_APP_JWK") ?: "",
         )
 
+    fun isTest() : Boolean {
+        return isLocal() || clusterName == "dev-gcp"
+    }
+
     fun isLocal() : Boolean {
         return clusterName == null
     }

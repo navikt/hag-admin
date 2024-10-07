@@ -13,14 +13,13 @@ fun main() {
 
 fun Application.module() {
     val logger = LoggerFactory.getLogger(Application::class.java)
-    logger.info("Started App - Localmode = ${Env.isLocal()}")
-    configureSecurity()
+    logger.info("Started App - testmode = ${Env.isTest()}")
+    configureSecurity(disabled = Env.isTest())
     val service = when {
         Env.isLocal() -> FakeServiceImpl()
         else -> NotifikasjonServiceImpl()
     }
     configureRouting(service)
-
 }
 
 

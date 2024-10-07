@@ -11,32 +11,30 @@ import no.nav.hag.NotifikasjonService
 import java.util.UUID
 
 fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
-
     routing {
         staticResources("/admin-ui", "admin-ui")
         authenticate {
             get("/") {
                 call.respondText("HAG Admin Tool")
             }
-        }
-        post("/ferdigstillOppgave") {
-            val skjema = call.receiveParameters()
-            val oppgaveId = skjema["oppgaveId"]
-            if (oppgaveId.isNullOrEmpty()) {
-                call.respond(HttpStatusCode.BadRequest)
-                return@post
+            post("/ferdigstillOppgave") {
+                val skjema = call.receiveParameters()
+                val oppgaveId = skjema["oppgaveId"]
+                if (oppgaveId.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                try {
+                    UUID.fromString(oppgaveId)
+                    notifikasjonService.ferdigstillOppgave(oppgaveId)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                } catch (ex: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError)
+                }
+                call.respond(HttpStatusCode.OK)
             }
-            try {
-                UUID.fromString(oppgaveId)
-                notifikasjonService.ferdigstillOppgave(oppgaveId)
-            } catch (e: IllegalArgumentException) {
-                call.respond(HttpStatusCode.BadRequest)
-                return@post
-            } catch (ex: Exception) {
-                call.respond(HttpStatusCode.InternalServerError)
-            }
-            call.respond(HttpStatusCode.OK)
-
         }
     }
 
