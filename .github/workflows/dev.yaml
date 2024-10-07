@@ -2,7 +2,8 @@ name: Build and deploy to dev
 on:
   push:
     branches:
-      - dev
+      - main
+      - 'dev/**'
 
 env:
   ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}
