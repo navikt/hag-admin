@@ -36,6 +36,7 @@ dependencies {
     implementation("io.ktor:ktor-server-auth-jvm")
     implementation("io.ktor:ktor-server-auth-jwt-jvm")
     implementation("io.ktor:ktor-server-netty-jvm")
+    implementation("io.ktor:ktor-server-html-builder")
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation ("net.logstash.logback:logstash-logback-encoder:8.0")
     testImplementation("io.ktor:ktor-server-test-host-jvm")
