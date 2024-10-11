@@ -1,9 +1,10 @@
 package no.nav.hag
 
-import io.ktor.server.application.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
-import no.nav.hag.plugins.*
+import io.ktor.server.application.Application
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
+import no.nav.hag.plugins.configureRouting
+import no.nav.hag.plugins.configureSecurity
 import org.slf4j.LoggerFactory
 
 fun main() {
@@ -13,13 +14,14 @@ fun main() {
 
 fun Application.module() {
     val logger = LoggerFactory.getLogger(Application::class.java)
-    logger.info("Started App - testmode = ${Env.isTest()}")
-    configureSecurity(disabled = Env.isTest())
+    val isTestMode = Env.isTest()
+    logger.info("Started App - testmode = $isTestMode")
+    configureSecurity(disabled = isTestMode)
     val service = when {
         Env.isLocal() -> FakeServiceImpl()
         else -> NotifikasjonServiceImpl()
     }
-    configureRouting(service)
+    configureRouting(service, !isTestMode)
 }
 
 
