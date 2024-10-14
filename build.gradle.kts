@@ -29,7 +29,7 @@ repositories {
 }
 
 dependencies {
-    implementation("no.nav.helsearbeidsgiver:arbeidsgiver-notifikasjon-klient:2.6.0")
+    implementation("no.nav.helsearbeidsgiver:arbeidsgiver-notifikasjon-klient:2.7.0")
     implementation("no.nav.helsearbeidsgiver:tokenprovider:0.4.0")
     implementation("no.nav.security:token-validation-ktor-v2:5.0.5")
     implementation("io.ktor:ktor-server-core-jvm")

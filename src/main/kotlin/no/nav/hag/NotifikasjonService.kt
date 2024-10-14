@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory
 
 
 interface NotifikasjonService {
-    suspend fun ferdigstillOppgave(oppgaveId: String)
+    suspend fun ferdigstillOppgave(foresporselId: String)
     suspend fun slettSak(foresporselId: String)
 }
 
@@ -15,9 +15,9 @@ class NotifikasjonServiceImpl : NotifikasjonService {
     val klient = buildNotifikasjonKlient()
     val merkelapp = "Inntektsmelding sykepenger"
 
-    override suspend fun ferdigstillOppgave(oppgaveId: String) {
-        logger.info("Ferdigstiller oppgave $oppgaveId")
-        klient.oppgaveUtgaatt(oppgaveId)
+    override suspend fun ferdigstillOppgave(foresporselId: String) {
+        logger.info("Ferdigstiller oppgave for forespørsel: $foresporselId")
+        klient.oppgaveUtgaattByEksternId(merkelapp, foresporselId)
     }
 
     override suspend fun slettSak(foresporselId: String) {
@@ -32,9 +32,9 @@ class NotifikasjonServiceImpl : NotifikasjonService {
 }
 
 class FakeServiceImpl : NotifikasjonService {
-    override suspend fun ferdigstillOppgave(oppgaveId: String) {
+    override suspend fun ferdigstillOppgave(foresporselId: String) {
         val logger = LoggerFactory.getLogger(FakeServiceImpl::class.java)
-        logger.info("ferdigstilt oppgave: $oppgaveId")
+        logger.info("ferdigstilt oppgave for forespørselId: $foresporselId")
     }
 
     override suspend fun slettSak(foresporselId: String) {

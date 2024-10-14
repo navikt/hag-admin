@@ -68,14 +68,14 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService, produ
             }
             post("/ferdigstillOppgave") {
                 val skjema = call.receiveParameters()
-                val oppgaveId = skjema["oppgaveId"]
-                if (oppgaveId.isNullOrEmpty()) {
+                val foresporselId = skjema["foresporselId"]
+                if (foresporselId.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.BadRequest)
                     return@post
                 }
                 try {
-                    UUID.fromString(oppgaveId)
-                    notifikasjonService.ferdigstillOppgave(oppgaveId)
+                    UUID.fromString(foresporselId)
+                    notifikasjonService.ferdigstillOppgave(foresporselId)
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest)
                     return@post
