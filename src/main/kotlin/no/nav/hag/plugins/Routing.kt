@@ -2,14 +2,20 @@ package no.nav.hag.plugins
 
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.authentication
 import io.ktor.server.html.respondHtml
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.request.receiveParameters
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.Routing
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.routing
 import io.ktor.util.pipeline.PipelineContext
 import kotlinx.css.Color
 import kotlinx.css.CssBuilder
@@ -49,6 +55,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
         }
         authenticate {
             get("/") {
+                val brukernavn = hentBrukernavnFraToken()
                 call.respondHtml(HttpStatusCode.OK) {
                     head {
                         link(rel = "stylesheet", href = "/styles.css", type = "text/css")
@@ -56,6 +63,11 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                     body {
                         h2 {
                             +"HAG Admin Tool"
+                        }
+                        p {
+                            text(
+                            "Logget inn som: $brukernavn"
+                            )
                         }
                         p {
                             a(href = "admin-ui/ferdigstillOppgave-form.html") {
@@ -78,8 +90,9 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                     return@post
                 }
                 try {
+                    val brukernavn = hentBrukernavnFraToken()
                     UUID.fromString(foresporselId)
-                    notifikasjonService.ferdigstillOppgave(foresporselId, auditUser())
+                    notifikasjonService.ferdigstillOppgave(foresporselId, brukernavn)
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest)
                     return@post
@@ -105,8 +118,9 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                     return@post
                 }
                 try {
+                    val brukernavn = hentBrukernavnFraToken()
                     UUID.fromString(foresporselId)
-                    notifikasjonService.slettSak(foresporselId, auditUser())
+                    notifikasjonService.slettSak(foresporselId, brukernavn)
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest)
                     return@post
@@ -128,9 +142,9 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
     }
 }
 
-private fun PipelineContext<Unit, ApplicationCall>.auditUser(): String {
+private fun PipelineContext<Unit, ApplicationCall>.hentBrukernavnFraToken(): String {
     val principal: TokenValidationContextPrincipal? = call.authentication.principal()
-    return principal?.context?.getClaims("default")?.getStringClaim("NAVident") ?: "Unknown"
+    return principal?.context?.getClaims("employee")?.getStringClaim("NAVident") ?: "Unknown"
 }
 
 suspend inline fun ApplicationCall.respondCss(builder: CssBuilder.() -> Unit) {
