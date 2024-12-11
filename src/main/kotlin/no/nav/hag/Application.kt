@@ -21,7 +21,7 @@ fun Application.module() {
         Env.isLocal() -> FakeServiceImpl()
         else -> NotifikasjonServiceImpl()
     }
-    configureRouting(service, !isTestMode)
+    configureRouting(service)
 }
 
 

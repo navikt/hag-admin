@@ -4,11 +4,13 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.authentication
 import io.ktor.server.html.respondHtml
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.util.pipeline.PipelineContext
 import kotlinx.css.Color
 import kotlinx.css.CssBuilder
 import kotlinx.css.Margin
@@ -22,11 +24,13 @@ import kotlinx.html.h2
 import kotlinx.html.head
 import kotlinx.html.link
 import kotlinx.html.p
+import no.nav.hag.Env
 import no.nav.hag.NotifikasjonService
+import no.nav.security.token.support.v2.TokenValidationContextPrincipal
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
-fun Application.configureRouting(notifikasjonService: NotifikasjonService, productionCss : Boolean ) {
+fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
 
     val logger = LoggerFactory.getLogger(Routing::class.java)
     routing {
@@ -34,10 +38,10 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService, produ
         get("/styles.css") {
             call.respondCss {
                 body {
-                    if (productionCss) {
-                        backgroundColor = Color.red
-                    } else {
+                    if (Env.isTest()) {
                         backgroundColor = Color.limeGreen
+                    } else {
+                        backgroundColor = Color.red
                     }
                     margin = Margin(0.px)
                 }
@@ -75,7 +79,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService, produ
                 }
                 try {
                     UUID.fromString(foresporselId)
-                    notifikasjonService.ferdigstillOppgave(foresporselId)
+                    notifikasjonService.ferdigstillOppgave(foresporselId, auditUser())
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest)
                     return@post
@@ -102,7 +106,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService, produ
                 }
                 try {
                     UUID.fromString(foresporselId)
-                    notifikasjonService.slettSak(foresporselId)
+                    notifikasjonService.slettSak(foresporselId, auditUser())
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest)
                     return@post
@@ -122,6 +126,11 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService, produ
             }
         }
     }
+}
+
+private fun PipelineContext<Unit, ApplicationCall>.auditUser(): String {
+    val principal: TokenValidationContextPrincipal? = call.authentication.principal()
+    return principal?.context?.getClaims("default")?.getStringClaim("NAVident") ?: "Unknown"
 }
 
 suspend inline fun ApplicationCall.respondCss(builder: CssBuilder.() -> Unit) {

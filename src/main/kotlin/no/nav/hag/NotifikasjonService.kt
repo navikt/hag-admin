@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory
 
 
 interface NotifikasjonService {
-    suspend fun ferdigstillOppgave(foresporselId: String)
-    suspend fun slettSak(foresporselId: String)
+    suspend fun ferdigstillOppgave(foresporselId: String, brukernavn: String)
+    suspend fun slettSak(foresporselId: String, brukernavn: String)
 }
 
 class NotifikasjonServiceImpl : NotifikasjonService {
@@ -15,13 +15,13 @@ class NotifikasjonServiceImpl : NotifikasjonService {
     val klient = buildNotifikasjonKlient()
     val merkelapp = "Inntektsmelding sykepenger"
 
-    override suspend fun ferdigstillOppgave(foresporselId: String) {
-        logger.info("Ferdigstiller oppgave for forespørsel: $foresporselId")
+    override suspend fun ferdigstillOppgave(foresporselId: String, brukernavn: String) {
+        logger.info("Ferdigstiller oppgave for forespørsel: $foresporselId. Utført av $brukernavn")
         klient.oppgaveUtgaattByEksternId(merkelapp, foresporselId)
     }
 
-    override suspend fun slettSak(foresporselId: String) {
-        logger.info("Sletter sak for forespørsel $foresporselId")
+    override suspend fun slettSak(foresporselId: String, brukernavn: String) {
+        logger.info("Sletter sak for forespørsel $foresporselId. Utført av $brukernavn")
         klient.softDeleteSakByGrupperingsid(foresporselId, merkelapp)
     }
 
@@ -32,12 +32,12 @@ class NotifikasjonServiceImpl : NotifikasjonService {
 }
 
 class FakeServiceImpl : NotifikasjonService {
-    override suspend fun ferdigstillOppgave(foresporselId: String) {
+    override suspend fun ferdigstillOppgave(foresporselId: String, brukernavn: String) {
         val logger = LoggerFactory.getLogger(FakeServiceImpl::class.java)
-        logger.info("ferdigstilt oppgave for forespørselId: $foresporselId")
+        logger.info("Bruker: $brukernavn ferdigstilt oppgave for forespørselId: $foresporselId")
     }
 
-    override suspend fun slettSak(foresporselId: String) {
+    override suspend fun slettSak(foresporselId: String, brukernavn: String) {
         TODO("Not yet implemented")
     }
 }

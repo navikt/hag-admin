@@ -21,9 +21,9 @@ class ApplicationTest {
         val issuerId = "employee"
         application {
             configureSecurity(disabled = false)
-            configureRouting(FakeServiceImpl(), productionCss = false)
+            configureRouting(FakeServiceImpl())
         }
-        val token: SignedJWT = server.issueToken(issuerId, Env.oauth2Environment.clientId, DefaultOAuth2TokenCallback(audience = listOf(Env.oauth2Environment.clientId)))
+        val token: SignedJWT = server.issueToken(issuerId, Env.oauth2Environment.clientId, DefaultOAuth2TokenCallback(subject = "user123", audience = listOf(Env.oauth2Environment.clientId)))
         println("Token: ${token.serialize()}")
         client.get("/") {
             headers {
