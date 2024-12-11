@@ -46,7 +46,7 @@ class ApplicationTest {
         val token = ""
         val arbeidsgiverNotifikasjonKlient = ArbeidsgiverNotifikasjonKlient(url, {token})
         testSuspend {
-            val result =  arbeidsgiverNotifikasjonKlient.oppgaveUtgaatt("32323")
+            val result =  arbeidsgiverNotifikasjonKlient.whoami()
             println(result)
         }
     }
