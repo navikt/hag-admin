@@ -1,5 +1,6 @@
 val kotlin_version: String by project
 val logback_version: String by project
+val mockk_version: String by project
 
 plugins {
     kotlin("jvm") version "2.0.20"
@@ -43,4 +44,5 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     testImplementation("no.nav.security:mock-oauth2-server:2.1.9")
+    testImplementation("io.mockk:mockk:$mockk_version")
 }

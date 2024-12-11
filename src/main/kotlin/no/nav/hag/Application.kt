@@ -5,6 +5,8 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import no.nav.hag.plugins.configureRouting
 import no.nav.hag.plugins.configureSecurity
+import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
+import no.nav.helsearbeidsgiver.tokenprovider.oauth2ClientCredentialsTokenGetter
 import org.slf4j.LoggerFactory
 
 fun main() {
@@ -17,11 +19,17 @@ fun Application.module() {
     val isTestMode = Env.isTest()
     logger.info("Started App - testmode = $isTestMode")
     configureSecurity(disabled = isTestMode)
+
     val service = when {
         Env.isLocal() -> FakeServiceImpl()
-        else -> NotifikasjonServiceImpl()
+        else -> NotifikasjonServiceImpl(buildNotifikasjonKlient())
     }
     configureRouting(service)
+}
+
+private fun buildNotifikasjonKlient(): ArbeidsgiverNotifikasjonKlient {
+    val tokenGetter = oauth2ClientCredentialsTokenGetter(Env.oauth2Environment)
+    return ArbeidsgiverNotifikasjonKlient(Env.notifikasjonUrl, tokenGetter)
 }
 
 
