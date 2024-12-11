@@ -144,7 +144,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
 
 private fun PipelineContext<Unit, ApplicationCall>.hentBrukernavnFraToken(): String {
     val principal: TokenValidationContextPrincipal? = call.authentication.principal()
-    return principal?.context?.getClaims("employee")?.getStringClaim("NAVident") ?: "Unknown"
+    return principal?.context?.getClaims("employee")?.getStringClaim("NAVident") ?: "Ukjent bruker"
 }
 
 suspend inline fun ApplicationCall.respondCss(builder: CssBuilder.() -> Unit) {
