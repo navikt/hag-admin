@@ -97,7 +97,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                     call.respond(HttpStatusCode.BadRequest)
                     return@post
                 } catch (ex: Exception) {
-                    call.respond(HttpStatusCode.InternalServerError)
+                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
                 }
                 call.respondHtml(HttpStatusCode.OK) {
                     head {
@@ -125,7 +125,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                     call.respond(HttpStatusCode.BadRequest)
                     return@post
                 } catch (ex: Exception) {
-                    call.respond(HttpStatusCode.InternalServerError)
+                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
                 }
                 call.respondHtml(HttpStatusCode.OK) {
                     head {
