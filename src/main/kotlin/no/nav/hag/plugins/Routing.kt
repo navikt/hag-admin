@@ -66,7 +66,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                         }
                         p {
                             text(
-                            "Logget inn som: $brukernavn"
+                                "Logget inn som: $brukernavn"
                             )
                         }
                         p {

@@ -1,8 +1,6 @@
 package no.nav.hag
 
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
-import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.OppgaveUtgaattByEksternIdException
-import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.SoftDeleteSakByGrupperingsidException
 import org.slf4j.LoggerFactory
 
 
@@ -19,21 +17,39 @@ class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient
 
     override suspend fun ferdigstillOppgave(foresporselId: String, brukernavn: String) {
         logger.info("Ferdigstiller oppgave for forespørsel: $foresporselId. Utført av $brukernavn")
-        try {
-            klient.oppgaveUtgaattByEksternId(merkelapp, foresporselId)
-        } catch (e : OppgaveUtgaattByEksternIdException) {
+        runCatching {
+            klient.oppgaveUtgaattByEksternId(
+                eksternId = foresporselId,
+                merkelapp = merkelapp,
+            )
+        }.recoverCatching {
             logger.info("Feil oppstod, forsøker heller å ferdigstille oppgave med gammel merkelapp")
-            klient.oppgaveUtgaattByEksternId(gammel_merkelapp, foresporselId)
+            klient.oppgaveUtgaattByEksternId(
+                eksternId = foresporselId,
+                merkelapp = gammel_merkelapp
+            )
+        }.onFailure { error ->
+            logger.error("Fant ikke oppgave under endring til utgått.", error)
+            throw error
         }
     }
 
     override suspend fun slettSak(foresporselId: String, brukernavn: String) {
         logger.info("Sletter sak for forespørsel $foresporselId. Utført av $brukernavn")
-        try {
-            klient.softDeleteSakByGrupperingsid(foresporselId, merkelapp)
-        } catch (e : SoftDeleteSakByGrupperingsidException) {
+        runCatching {
+            klient.softDeleteSakByGrupperingsid(
+                grupperingsid = foresporselId,
+                merkelapp = merkelapp,
+            )
+        }.recoverCatching {
             logger.info("Feil oppstod, forsøker heller å slette sak med gammel merkelapp")
-            klient.softDeleteSakByGrupperingsid(foresporselId, gammel_merkelapp)
+            klient.softDeleteSakByGrupperingsid(
+                grupperingsid = foresporselId,
+                merkelapp = gammel_merkelapp
+            )
+        }.onFailure { error ->
+            logger.error("Fant ikke sak", error)
+            throw error
         }
     }
 
