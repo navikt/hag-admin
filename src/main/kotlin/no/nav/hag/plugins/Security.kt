@@ -26,7 +26,7 @@ fun Application.configureSecurity(disabled: Boolean = false) {
             )
         authentication {
             tokenValidationSupport(
-                config = config,
+                config = config
             )
         }
     }
