@@ -141,11 +141,8 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
 }
 
 private fun PipelineContext<Unit, ApplicationCall>.hentBrukernavnFraToken(): String {
-    val authToken =
-        call.request.authorization()?.removePrefix("${AuthScheme.Bearer} ")
-            ?: throw IllegalAccessException("Mangler autorisasjonsheader.")
-
-    return JWT().decodeJwt(authToken).claims["NAVident"]?.asString() ?: "Ukjent bruker"
+    val authToken = call.request.authorization()?.removePrefix("${AuthScheme.Bearer} ")
+    return authToken.let { JWT().decodeJwt(it) }.claims["NAVident"]?.asString() ?: "Ukjent bruker"
 }
 
 suspend inline fun ApplicationCall.respondCss(builder: CssBuilder.() -> Unit) {
