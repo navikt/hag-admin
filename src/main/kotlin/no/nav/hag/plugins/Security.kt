@@ -9,6 +9,8 @@ import io.ktor.server.auth.bearer
 import no.nav.hag.AuthClient
 import no.nav.hag.Env
 
+const val GROUP_ID_HAG = "e3ab1801-e5a6-48ca-9c3b-5a91ce182c57"
+
 fun Application.configureSecurity(authClient: AuthClient, disabled: Boolean = false) {
     if (disabled && Env.isTest()) {
         authentication {
@@ -20,7 +22,7 @@ fun Application.configureSecurity(authClient: AuthClient, disabled: Boolean = fa
         authentication {
             bearer {
                 authenticate {
-                    if (authClient.introspect(it.token)) {
+                    if (authClient.introspect(it.token) && it.token.containsClaimForAllowedGroup()) {
                         UserIdPrincipal("hag-admin")
                     } else {
                         null
@@ -30,3 +32,9 @@ fun Application.configureSecurity(authClient: AuthClient, disabled: Boolean = fa
         }
     }
 }
+
+private fun String.containsClaimForAllowedGroup(): Boolean =
+    readClaim("groups")
+        ?.asList(String::class.java)
+        .orEmpty()
+        .contains(GROUP_ID_HAG)

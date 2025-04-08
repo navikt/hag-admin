@@ -10,6 +10,7 @@ import io.ktor.server.testing.testApplication
 import io.ktor.test.dispatcher.testSuspend
 import io.mockk.coEvery
 import io.mockk.mockk
+import no.nav.hag.plugins.GROUP_ID_HAG
 import no.nav.hag.plugins.configureRouting
 import no.nav.hag.plugins.configureSecurity
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
@@ -22,7 +23,9 @@ class ApplicationTest {
         val authClient = mockk<AuthClient>()
 
         val mockToken =
-            JWT.create().withClaim("NAVident", "John Ronald Reuel")
+            JWT.create()
+                .withClaim("NAVident", "John Ronald Reuel")
+                .withArrayClaim("groups", arrayOf(GROUP_ID_HAG))
                 .sign(Algorithm.HMAC256("super secret"))
 
         coEvery { authClient.introspect(mockToken) } returns true

@@ -1,9 +1,7 @@
 package no.nav.hag.plugins
 
-import com.auth0.jwt.JWT
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.auth.AuthScheme
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
@@ -140,10 +138,12 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
     }
 }
 
-private fun PipelineContext<Unit, ApplicationCall>.hentBrukernavnFraToken(): String {
-    val authToken = call.request.authorization()?.removePrefix("${AuthScheme.Bearer} ")
-    return authToken?.let { JWT().decodeJwt(it) }?.claims?.get("NAVident")?.asString() ?: "Ukjent bruker"
-}
+private fun PipelineContext<Unit, ApplicationCall>.hentBrukernavnFraToken(): String =
+    call.request
+        .authorization()
+        .readClaim("NAVident")
+        ?.asString()
+        ?: "Ukjent bruker"
 
 suspend inline fun ApplicationCall.respondCss(builder: CssBuilder.() -> Unit) {
     this.respondText(CssBuilder().apply(builder).toString(), ContentType.Text.CSS)
