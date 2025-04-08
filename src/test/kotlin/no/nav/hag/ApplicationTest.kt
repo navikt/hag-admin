@@ -1,36 +1,40 @@
 package no.nav.hag
 
-import com.nimbusds.jwt.SignedJWT
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
 import io.ktor.test.dispatcher.testSuspend
+import io.mockk.coEvery
+import io.mockk.mockk
 import no.nav.hag.plugins.configureRouting
 import no.nav.hag.plugins.configureSecurity
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
-import no.nav.security.mock.oauth2.MockOAuth2Server
-import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ApplicationTest {
     @Test
     fun testRoot() = testApplication {
+        val authClient = mockk<AuthClient>()
 
-        val server = MockOAuth2Server()
-        server.start(port = 6666)
-        val issuerId = "employee"
+        val mockToken =
+            JWT.create().withClaim("NAVident", "John Ronald Reuel")
+                .sign(Algorithm.HMAC256("super secret"))
+
+        coEvery { authClient.introspect(mockToken) } returns true
+
         application {
-            configureSecurity(disabled = false)
+            configureSecurity(authClient, disabled = false)
             configureRouting(FakeServiceImpl())
         }
-        val token: SignedJWT = server.issueToken(issuerId, Env.oauth2Environment.clientId, DefaultOAuth2TokenCallback(subject = "user123", audience = listOf(Env.oauth2Environment.clientId), claims = mapOf("NAVident" to "User123")))
-        println("Token: ${token.serialize()}")
+
         client.get("/") {
             headers {
-                append("Authorization", "Bearer ${token.serialize()}")
+                append("Authorization", "Bearer $mockToken")
             }
         }.apply {
             println(bodyAsText())
@@ -40,16 +44,15 @@ class ApplicationTest {
             assertEquals(HttpStatusCode.OK, status)
 
         }
-        server.shutdown()
     }
 
     @Test
     fun testKlient() {
-        val url ="https://notifikasjon-fake-produsent-api.ekstern.dev.nav.no/api/graphql"
+        val url = "https://notifikasjon-fake-produsent-api.ekstern.dev.nav.no/api/graphql"
         val token = ""
-        val arbeidsgiverNotifikasjonKlient = ArbeidsgiverNotifikasjonKlient(url, {token})
+        val arbeidsgiverNotifikasjonKlient = ArbeidsgiverNotifikasjonKlient(url) { token }
         testSuspend {
-            val result =  arbeidsgiverNotifikasjonKlient.whoami()
+            val result = arbeidsgiverNotifikasjonKlient.whoami()
             println(result)
         }
     }
