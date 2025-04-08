@@ -142,7 +142,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
 
 private fun PipelineContext<Unit, ApplicationCall>.hentBrukernavnFraToken(): String {
     val authToken = call.request.authorization()?.removePrefix("${AuthScheme.Bearer} ")
-    return authToken.let { JWT().decodeJwt(it) }.claims["NAVident"]?.asString() ?: "Ukjent bruker"
+    return authToken?.let { JWT().decodeJwt(it) }?.claims?.get("NAVident")?.asString() ?: "Ukjent bruker"
 }
 
 suspend inline fun ApplicationCall.respondCss(builder: CssBuilder.() -> Unit) {
