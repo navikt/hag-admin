@@ -1,14 +1,17 @@
 package no.nav.hag.plugins
 
 
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
+import io.ktor.server.application.Application
+import io.ktor.server.auth.UserIdPrincipal
+import io.ktor.server.auth.authentication
+import io.ktor.server.auth.basic
+import io.ktor.server.auth.bearer
+import no.nav.hag.AuthClient
 import no.nav.hag.Env
-import no.nav.security.token.support.v2.IssuerConfig
-import no.nav.security.token.support.v2.TokenSupportConfig
-import no.nav.security.token.support.v2.tokenValidationSupport
 
-fun Application.configureSecurity(disabled: Boolean = false) {
+const val GROUP_ID_HAG = "e3ab1801-e5a6-48ca-9c3b-5a91ce182c57"
+
+fun Application.configureSecurity(authClient: AuthClient, disabled: Boolean = false) {
     if (disabled && Env.isTest()) {
         authentication {
             basic {
@@ -16,19 +19,22 @@ fun Application.configureSecurity(disabled: Boolean = false) {
             }
         }
     } else {
-        val config =
-            TokenSupportConfig(
-                IssuerConfig(
-                    name = "employee",
-                    discoveryUrl = Env.oauth2Environment.wellKnownUrl,
-                    acceptedAudience = listOf(Env.oauth2Environment.clientId),
-                )
-            )
         authentication {
-            tokenValidationSupport(
-                config = config
-            )
+            bearer {
+                authenticate {
+                    if (authClient.introspect(it.token) && it.token.containsClaimForAllowedGroup()) {
+                        UserIdPrincipal("hag-admin")
+                    } else {
+                        null
+                    }
+                }
+            }
         }
     }
-
 }
+
+private fun String.containsClaimForAllowedGroup(): Boolean =
+    readClaim("groups")
+        ?.asList(String::class.java)
+        .orEmpty()
+        .contains(GROUP_ID_HAG)

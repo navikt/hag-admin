@@ -4,6 +4,7 @@ val mockk_version: String by project
 
 plugins {
     kotlin("jvm") version "2.0.20"
+    kotlin("plugin.serialization") version "2.0.20"
     id("io.ktor.plugin") version "2.3.12"
 }
 
@@ -30,19 +31,23 @@ repositories {
 }
 
 dependencies {
-    implementation("no.nav.helsearbeidsgiver:arbeidsgiver-notifikasjon-klient:3.3.3")
-    implementation("no.nav.helsearbeidsgiver:tokenprovider:0.4.0")
-    implementation("no.nav.security:token-validation-ktor-v2:5.0.5")
-    implementation("io.ktor:ktor-server-core-jvm")
+    implementation ("net.logstash.logback:logstash-logback-encoder:8.0")
+    implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("io.ktor:ktor-client-apache5")
+    implementation("io.ktor:ktor-client-content-negotiation")
+    implementation("io.ktor:ktor-client-core")
+    implementation("io.ktor:ktor-serialization-kotlinx-json")
     implementation("io.ktor:ktor-server-auth-jvm")
     implementation("io.ktor:ktor-server-auth-jwt-jvm")
-    implementation("io.ktor:ktor-server-netty-jvm")
+    implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-server-html-builder")
+    implementation("io.ktor:ktor-server-netty-jvm")
+    implementation("no.nav.helsearbeidsgiver:arbeidsgiver-notifikasjon-klient:3.3.3")
+    implementation("no.nav.helsearbeidsgiver:utils:0.9.0")
     implementation("org.jetbrains.kotlin-wrappers:kotlin-css:1.0.0-pre.817")
-    implementation("ch.qos.logback:logback-classic:$logback_version")
-    implementation ("net.logstash.logback:logstash-logback-encoder:8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+
     testImplementation("io.ktor:ktor-server-test-host-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
-    testImplementation("no.nav.security:mock-oauth2-server:2.1.9")
     testImplementation("io.mockk:mockk:$mockk_version")
 }

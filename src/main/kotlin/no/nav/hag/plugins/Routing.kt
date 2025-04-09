@@ -6,13 +6,12 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
-import io.ktor.server.auth.authentication
 import io.ktor.server.html.respondHtml
 import io.ktor.server.http.content.staticResources
+import io.ktor.server.request.authorization
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
-import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -32,13 +31,10 @@ import kotlinx.html.link
 import kotlinx.html.p
 import no.nav.hag.Env
 import no.nav.hag.NotifikasjonService
-import no.nav.security.token.support.v2.TokenValidationContextPrincipal
-import org.slf4j.LoggerFactory
 import java.util.UUID
 
 fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
 
-    val logger = LoggerFactory.getLogger(Routing::class.java)
     routing {
         staticResources("/admin-ui", "admin-ui")
         get("/styles.css") {
@@ -142,10 +138,12 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
     }
 }
 
-private fun PipelineContext<Unit, ApplicationCall>.hentBrukernavnFraToken(): String {
-    val principal: TokenValidationContextPrincipal? = call.authentication.principal()
-    return principal?.context?.getClaims("employee")?.getStringClaim("NAVident") ?: "Ukjent bruker"
-}
+private fun PipelineContext<Unit, ApplicationCall>.hentBrukernavnFraToken(): String =
+    call.request
+        .authorization()
+        .readClaim("NAVident")
+        ?.asString()
+        ?: "Ukjent bruker"
 
 suspend inline fun ApplicationCall.respondCss(builder: CssBuilder.() -> Unit) {
     this.respondText(CssBuilder().apply(builder).toString(), ContentType.Text.CSS)
