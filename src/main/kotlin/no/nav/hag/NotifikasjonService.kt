@@ -37,15 +37,8 @@ class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient
     override suspend fun slettSak(foresporselId: String, brukernavn: String) {
         logger.info("Sletter sak for forespørsel $foresporselId. Utført av $brukernavn")
         runCatching {
-            klient.softDeleteSakByGrupperingsid(
-                grupperingsid = foresporselId,
-                merkelapp = merkelapp
-            )
-        }.recoverCatching {
-            logger.info("Feil oppstod, forsøker heller å slette sak med gammel merkelapp")
-            klient.softDeleteSakByGrupperingsid(
-                grupperingsid = foresporselId,
-                merkelapp = gammel_merkelapp
+            klient.hardDeleteSak(
+                id = foresporselId,
             )
         }.onFailure { error ->
             logger.error("Klarte ikke å slette sak", error)
