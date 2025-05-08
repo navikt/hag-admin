@@ -71,7 +71,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                             }
                         }
                         p {
-                            a(href = "admin-ui/softDeleteSak-form.html") {
+                            a(href = "admin-ui/hardDeleteSak-form.html") {
                                 +"Slett sak"
                             }
                         }
