@@ -43,5 +43,9 @@ spec:
     requests:
       cpu: 50m
       memory: 128Mi
+  observability:
+    logging:
+      destinations:
+        - id: secure_logs
   secureLogs:
     enabled: true
