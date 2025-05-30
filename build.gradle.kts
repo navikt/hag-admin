@@ -1,6 +1,7 @@
 val kotlin_version: String by project
 val logback_version: String by project
 val mockk_version: String by project
+val arbeidsgiver_notifikasjon_klient_version: String by project
 
 plugins {
     kotlin("jvm") version "2.0.20"
@@ -42,7 +43,7 @@ dependencies {
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-server-html-builder")
     implementation("io.ktor:ktor-server-netty-jvm")
-    implementation("no.nav.helsearbeidsgiver:arbeidsgiver-notifikasjon-klient:3.3.3")
+    implementation("no.nav.helsearbeidsgiver:arbeidsgiver-notifikasjon-klient:$arbeidsgiver_notifikasjon_klient_version")
     implementation("no.nav.helsearbeidsgiver:utils:0.9.0")
     implementation("org.jetbrains.kotlin-wrappers:kotlin-css:1.0.0-pre.817")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
