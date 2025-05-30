@@ -12,6 +12,7 @@ import io.ktor.server.request.authorization
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
+import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -138,7 +139,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
     }
 }
 
-private fun PipelineContext<Unit, ApplicationCall>.hentBrukernavnFraToken(): String =
+private fun RoutingContext.hentBrukernavnFraToken(): String =
     call.request
         .authorization()
         .readClaim("NAVident")
