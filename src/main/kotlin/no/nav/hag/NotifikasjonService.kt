@@ -12,7 +12,6 @@ interface NotifikasjonService {
 class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient) : NotifikasjonService {
     val logger = LoggerFactory.getLogger(NotifikasjonServiceImpl::class.java)
     val merkelapp = "Inntektsmelding sykepenger"
-    val gammel_merkelapp ="Inntektsmelding"
     val klient = notifikasjonKlient
 
     override suspend fun ferdigstillOppgave(foresporselId: String, brukernavn: String) {
@@ -21,12 +20,6 @@ class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient
             klient.oppgaveUtgaattByEksternId(
                 eksternId = foresporselId,
                 merkelapp = merkelapp,
-            )
-        }.recoverCatching {
-            logger.info("Feil oppstod, forsøker heller å ferdigstille oppgave med gammel merkelapp")
-            klient.oppgaveUtgaattByEksternId(
-                eksternId = foresporselId,
-                merkelapp = gammel_merkelapp
             )
         }.onFailure { error ->
             logger.error("Fant ikke oppgave under endring til utgått.", error)
