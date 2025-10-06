@@ -32,6 +32,7 @@ import kotlinx.html.link
 import kotlinx.html.p
 import no.nav.hag.Env
 import no.nav.hag.NotifikasjonService
+import no.nav.hag.domain.ForespoerselListe
 import java.util.UUID
 
 fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
@@ -120,6 +121,37 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                     notifikasjonService.slettSak(foresporselId, brukernavn)
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                } catch (ex: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
+                }
+                call.respondHtml(HttpStatusCode.OK) {
+                    head {
+                        link(rel = "stylesheet", href = "/styles.css", type = "text/css")
+                    }
+                    body {
+                        h2 {
+                            +"Utført OK"
+                        }
+                    }
+                }
+            }
+            post("/slettSaker") {
+                val skjema = call.receiveParameters()
+                val foresporselIdInput = skjema["foresporselIdInput"]
+                if (foresporselIdInput.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                try {
+                    val brukernavn = hentBrukernavnFraToken()
+
+                    val forespoerselListe =
+                        ForespoerselListe(foresporselIdInput)
+
+                    //notifikasjonService.slettSak(foresporselId, brukernavn)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest,"Ugyldig input: ${e.message}")
                     return@post
                 } catch (ex: Exception) {
                     call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
