@@ -72,11 +72,6 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                             }
                         }
                         p {
-                            a(href = "admin-ui/hardDeleteSak-form.html") {
-                                +"Slett sak"
-                            }
-                        }
-                        p {
                             a(href = "admin-ui/hardDeleteSaker-form.html") {
                                 +"Slett saker (Batch)"
                             }
@@ -95,34 +90,6 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                     val brukernavn = hentBrukernavnFraToken()
                     UUID.fromString(foresporselId)
                     notifikasjonService.ferdigstillOppgave(foresporselId, brukernavn)
-                } catch (e: IllegalArgumentException) {
-                    call.respond(HttpStatusCode.BadRequest)
-                    return@post
-                } catch (ex: Exception) {
-                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
-                }
-                call.respondHtml(HttpStatusCode.OK) {
-                    head {
-                        link(rel = "stylesheet", href = "/styles.css", type = "text/css")
-                    }
-                    body {
-                        h2 {
-                            +"Utført OK"
-                        }
-                    }
-                }
-            }
-            post("/slettSak") {
-                val skjema = call.receiveParameters()
-                val foresporselId = skjema["foresporselId"]
-                if (foresporselId.isNullOrEmpty()) {
-                    call.respond(HttpStatusCode.BadRequest)
-                    return@post
-                }
-                try {
-                    val brukernavn = hentBrukernavnFraToken()
-                    UUID.fromString(foresporselId)
-                    notifikasjonService.slettSak(foresporselId, brukernavn)
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest)
                     return@post
