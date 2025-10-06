@@ -1,8 +1,12 @@
 package no.nav.hag
 
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
+import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import kotlinx.serialization.json.Json
 import no.nav.hag.plugins.configureRouting
 import no.nav.hag.plugins.configureSecurity
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
@@ -21,7 +25,12 @@ fun Application.module() {
     logger.info("Started App - testmode = $isTestMode")
 
     configureSecurity(authClient, disabled = isTestMode)
-
+    install(ContentNegotiation) {
+        json(Json {
+            prettyPrint = true
+            isLenient = true
+        })
+    }
     val tokenGetter = authClient.tokenGetter(Env.agNotifikasjonScope)
     val agNotifikasjonKlient = ArbeidsgiverNotifikasjonKlient(Env.agNotifikasjonUrl, tokenGetter)
 

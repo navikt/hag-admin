@@ -4,7 +4,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.html.respondHtml
 import io.ktor.server.http.content.staticResources
@@ -16,7 +15,6 @@ import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import io.ktor.util.pipeline.PipelineContext
 import kotlinx.css.Color
 import kotlinx.css.CssBuilder
 import kotlinx.css.Margin
@@ -32,7 +30,8 @@ import kotlinx.html.link
 import kotlinx.html.p
 import no.nav.hag.Env
 import no.nav.hag.NotifikasjonService
-import no.nav.hag.domain.ForespoerselListe
+import no.nav.hag.domain.ForespoerselBatchSletter
+import no.nav.helsearbeidsgiver.utils.log.logger
 import java.util.UUID
 
 fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
@@ -75,6 +74,11 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                         p {
                             a(href = "admin-ui/hardDeleteSak-form.html") {
                                 +"Slett sak"
+                            }
+                        }
+                        p {
+                            a(href = "admin-ui/hardDeleteSaker-form.html") {
+                                +"Slett saker (Batch)"
                             }
                         }
                     }
@@ -145,27 +149,17 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                 }
                 try {
                     val brukernavn = hentBrukernavnFraToken()
-
-                    val forespoerselListe =
-                        ForespoerselListe(foresporselIdInput)
-
-                    //notifikasjonService.slettSak(foresporselId, brukernavn)
+                    val forespoerselSletter = ForespoerselBatchSletter(notifikasjonService, brukernavn)
+                    val rapport = forespoerselSletter.slett(foresporselIdInput)
+                    logger().info(rapport.toString())
+                    call.respond(HttpStatusCode.OK, rapport)
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest,"Ugyldig input: ${e.message}")
                     return@post
                 } catch (ex: Exception) {
                     call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
                 }
-                call.respondHtml(HttpStatusCode.OK) {
-                    head {
-                        link(rel = "stylesheet", href = "/styles.css", type = "text/css")
-                    }
-                    body {
-                        h2 {
-                            +"Utført OK"
-                        }
-                    }
-                }
+
             }
         }
     }

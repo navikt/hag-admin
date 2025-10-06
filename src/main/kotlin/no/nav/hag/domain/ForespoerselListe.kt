@@ -4,6 +4,7 @@ import java.util.UUID
 
 class ForespoerselListe(val liste: String) {
 
+
     /*
     Tar imot en String med UUIDer separert med semikolon.
     Fjerner whitespace og returnerer et map med orginalString som peker på UUID, null hvis ugyldig UUID
@@ -24,4 +25,5 @@ class ForespoerselListe(val liste: String) {
             return null
         }
     }
+
 }
