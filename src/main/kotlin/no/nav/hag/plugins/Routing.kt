@@ -30,9 +30,8 @@ import kotlinx.html.link
 import kotlinx.html.p
 import no.nav.hag.Env
 import no.nav.hag.NotifikasjonService
-import no.nav.hag.domain.ForespoerselBatchSletter
+import no.nav.hag.domain.NotifikasjonBatcher
 import no.nav.helsearbeidsgiver.utils.log.logger
-import java.util.UUID
 
 fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
 
@@ -67,13 +66,13 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                             )
                         }
                         p {
-                            a(href = "admin-ui/ferdigstillOppgave-form.html") {
-                                +"Ferdigstill oppgave"
+                            a(href = "admin-ui/ferdigstillOppgaver-form.html") {
+                                +"Ferdigstill oppgaver"
                             }
                         }
                         p {
                             a(href = "admin-ui/hardDeleteSaker-form.html") {
-                                +"Slett saker (Batch)"
+                                +"Slett saker"
                             }
                         }
                     }
@@ -81,30 +80,22 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
             }
             post("/ferdigstillOppgave") {
                 val skjema = call.receiveParameters()
-                val foresporselId = skjema["foresporselId"]
-                if (foresporselId.isNullOrEmpty()) {
+                val foresporselIdInput = skjema["foresporselIdInput"]
+                if (foresporselIdInput.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.BadRequest)
                     return@post
                 }
                 try {
                     val brukernavn = hentBrukernavnFraToken()
-                    UUID.fromString(foresporselId)
-                    notifikasjonService.ferdigstillOppgave(foresporselId, brukernavn)
+                    val batch = NotifikasjonBatcher(notifikasjonService, brukernavn)
+                    val rapport = batch.ferdigstillOppgave(foresporselIdInput)
+                    logger().info(rapport.toString())
+                    call.respond(HttpStatusCode.OK, rapport)
                 } catch (e: IllegalArgumentException) {
-                    call.respond(HttpStatusCode.BadRequest)
+                    call.respond(HttpStatusCode.BadRequest,"Ugyldig input: ${e.message}")
                     return@post
                 } catch (ex: Exception) {
                     call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
-                }
-                call.respondHtml(HttpStatusCode.OK) {
-                    head {
-                        link(rel = "stylesheet", href = "/styles.css", type = "text/css")
-                    }
-                    body {
-                        h2 {
-                            +"Utført OK"
-                        }
-                    }
                 }
             }
             post("/slettSaker") {
@@ -116,9 +107,8 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                 }
                 try {
                     val brukernavn = hentBrukernavnFraToken()
-                    val forespoerselSletter = ForespoerselBatchSletter(notifikasjonService, brukernavn)
-                    val rapport = forespoerselSletter.slett(foresporselIdInput)
-                    logger().info(rapport.toString())
+                    val forespoerselBatch = NotifikasjonBatcher(notifikasjonService, brukernavn)
+                    val rapport = forespoerselBatch.slett(foresporselIdInput)
                     call.respond(HttpStatusCode.OK, rapport)
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest,"Ugyldig input: ${e.message}")

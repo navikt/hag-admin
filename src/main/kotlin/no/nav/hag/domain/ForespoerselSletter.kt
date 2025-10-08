@@ -4,28 +4,44 @@ import kotlinx.serialization.Serializable
 import no.nav.hag.NotifikasjonService
 
 @Serializable
-enum class SletteStatus {
+enum class Status {
     OK,
     UGYLDIG,
     FEILET
 }
 
+enum class Operasjon {
+    SLETT,
+    FERDIGSTILL_OPPGAVE
+}
+
 @Serializable
-data class SletteResultat(val uuid: String, val status: SletteStatus)
+data class Resultat(val uuid: String, val status: Status)
 
-class ForespoerselBatchSletter(val notifikasjonService: NotifikasjonService, val brukernavn: String) {
+class NotifikasjonBatcher(val notifikasjonService: NotifikasjonService, val brukernavn: String) {
 
-    suspend fun slett(liste: String): List<SletteResultat> {
-        val liste = ForespoerselListe(liste).konverterInput()
+    suspend fun slett(batch: String): List<Resultat> {
+        return utfoerBatchOperasjon(Operasjon.SLETT, batch)
+    }
+
+    suspend fun ferdigstillOppgave(batch: String): List<Resultat> {
+        return utfoerBatchOperasjon(Operasjon.FERDIGSTILL_OPPGAVE, batch)
+    }
+
+    private suspend fun utfoerBatchOperasjon(operasjon: Operasjon, batch: String): List<Resultat> {
+        val liste = ForespoerselListe(batch).konverterInput()
         val resultat = liste.map {
             if (it.value == null) {
-                SletteResultat(it.key, SletteStatus.UGYLDIG)
+                Resultat(it.key, Status.UGYLDIG)
             } else {
                 try {
-                    notifikasjonService.slettSak(it.key, brukernavn)
-                    SletteResultat(it.key, SletteStatus.OK)
+                    when (operasjon) {
+                        Operasjon.FERDIGSTILL_OPPGAVE -> notifikasjonService.ferdigstillOppgave(it.key, brukernavn)
+                        Operasjon.SLETT -> notifikasjonService.slettSak(it.key, brukernavn)
+                    }
+                    Resultat(it.key, Status.OK)
                 } catch (e: Exception) {
-                    SletteResultat(it.key , SletteStatus.FEILET)
+                    Resultat(it.key, Status.FEILET)
                 }
             }
         }

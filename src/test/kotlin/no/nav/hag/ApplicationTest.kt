@@ -43,7 +43,7 @@ class ApplicationTest {
             println(bodyAsText())
             assertEquals(HttpStatusCode.OK, status)
         }
-        client.get("/admin-ui/ferdigstillOppgave-form.html").apply {
+        client.get("/admin-ui/ferdigstillOppgaver-form.html").apply {
             assertEquals(HttpStatusCode.OK, status)
 
         }
