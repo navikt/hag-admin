@@ -12,7 +12,9 @@ enum class Status {
 
 enum class Operasjon {
     SLETT,
-    FERDIGSTILL_OPPGAVE
+    FERDIGSTILL_OPPGAVE,
+    FERDIGSTILL_SAK,
+
 }
 
 @Serializable
@@ -20,12 +22,16 @@ data class Resultat(val uuid: String, val status: Status)
 
 class NotifikasjonBatcher(val notifikasjonService: NotifikasjonService, val brukernavn: String) {
 
-    suspend fun slett(batch: String): List<Resultat> {
+    suspend fun slettSaker(batch: String): List<Resultat> {
         return utfoerBatchOperasjon(Operasjon.SLETT, batch)
     }
 
-    suspend fun ferdigstillOppgave(batch: String): List<Resultat> {
+    suspend fun ferdigstillOppgaver(batch: String): List<Resultat> {
         return utfoerBatchOperasjon(Operasjon.FERDIGSTILL_OPPGAVE, batch)
+    }
+
+    suspend fun ferdigstillSaker(batch: String): List<Resultat> {
+        return utfoerBatchOperasjon(Operasjon.FERDIGSTILL_SAK, batch)
     }
 
     private suspend fun utfoerBatchOperasjon(operasjon: Operasjon, batch: String): List<Resultat> {
@@ -38,6 +44,7 @@ class NotifikasjonBatcher(val notifikasjonService: NotifikasjonService, val bruk
                     when (operasjon) {
                         Operasjon.FERDIGSTILL_OPPGAVE -> notifikasjonService.ferdigstillOppgave(it.key, brukernavn)
                         Operasjon.SLETT -> notifikasjonService.slettSak(it.key, brukernavn)
+                        Operasjon.FERDIGSTILL_SAK -> notifikasjonService.ferdigstillSak(it.key, brukernavn)
                     }
                     Resultat(it.key, Status.OK)
                 } catch (e: Exception) {
