@@ -43,12 +43,13 @@ class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient
 }
 
 class FakeServiceImpl : NotifikasjonService {
+    val logger = LoggerFactory.getLogger(FakeServiceImpl::class.java)
+
     override suspend fun ferdigstillOppgave(foresporselId: String, brukernavn: String) {
-        val logger = LoggerFactory.getLogger(FakeServiceImpl::class.java)
         logger.info("Bruker: $brukernavn ferdigstilt oppgave for forespørselId: $foresporselId")
     }
 
     override suspend fun slettSak(foresporselId: String, brukernavn: String) {
-        TODO("Not yet implemented")
+        logger.info("Bruker: $brukernavn slettet sak for forespørselId: $foresporselId")
     }
 }

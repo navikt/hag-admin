@@ -6,12 +6,12 @@
     <link rel="stylesheet" href="/styles.css" type="text/css" />
 </head>
 <body>
-<h1>Ferdigstill oppgave</h1>
+<h1>Ferdigstill oppgaver</h1>
 <form method="post" action="/ferdigstillOppgave">
     <div>
-        <label for="foresporselId">ForespørselID: </label>
-        <input type="text" id="foresporselId" name="foresporselId" size="40">
+        <label for="foresporselIdInput">ForespørselIder: </label>
     </div>
+    <textarea id="foresporselIdInput" name="foresporselIdInput" rows="40" cols="37" placeholder="UUID1;UUID2;..."></textarea>
     <input type="submit">
 </form>
 </body>
