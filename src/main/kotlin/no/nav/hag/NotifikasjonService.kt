@@ -3,8 +3,7 @@ package no.nav.hag
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
 import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.enums.SaksStatus
 import org.slf4j.LoggerFactory
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.days
 
 
 interface NotifikasjonService {
@@ -16,7 +15,7 @@ interface NotifikasjonService {
 class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient, val utgaattUrl: String) : NotifikasjonService {
     val logger = LoggerFactory.getLogger(NotifikasjonServiceImpl::class.java)
     val merkelapp = "Inntektsmelding sykepenger"
-    val ferdigstiltSakLevetid = 90.toDuration(DurationUnit.DAYS) // Når en sak ferdigstilles, beholdes den i oversikten i 90 dager før sletting
+    val ferdigstiltSakLevetid = 90.days // Når en sak ferdigstilles, beholdes den i oversikten i 90 dager før sletting
     val klient = notifikasjonKlient
 
     override suspend fun ferdigstillOppgave(foresporselId: String, brukernavn: String) {
