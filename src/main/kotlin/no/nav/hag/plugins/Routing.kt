@@ -72,13 +72,15 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                         }
                         p {
                             a(href = "admin-ui/ferdigstillSaker-form.html") {
-                                +"Ferdigstill saker (Setter sak til ferdig, bruker kan fortsatt se saken, men kan ikke trykke på skjema / sende inn lengre)"
+                                +"Ferdigstill saker"
                             }
+                            +" (Setter sak til ferdig, bruker kan fortsatt se saken, men kan ikke trykke på skjema / sende inn lengre)"
                         }
                         p {
                             a(href = "admin-ui/hardDeleteSaker-form.html") {
-                                +"Slett saker (Sletter hele saken - fjernes umiddelbart fra Min Side Arbeidsgiver-oversikt)"
+                                +"Slett saker"
                             }
+                            +" (Sletter hele saken - fjernes umiddelbart fra Min Side Arbeidsgiver-oversikt)"
                         }
                     }
                 }
