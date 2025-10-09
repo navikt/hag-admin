@@ -71,14 +71,19 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                             }
                         }
                         p {
+                            a(href = "admin-ui/ferdigstillSaker-form.html") {
+                                +"Ferdigstill saker (Setter sak til ferdig, bruker kan fortsatt se saken, men kan ikke trykke på skjema / sende inn lengre)"
+                            }
+                        }
+                        p {
                             a(href = "admin-ui/hardDeleteSaker-form.html") {
-                                +"Slett saker"
+                                +"Slett saker (Sletter hele saken - fjernes umiddelbart fra Min Side Arbeidsgiver-oversikt)"
                             }
                         }
                     }
                 }
             }
-            post("/ferdigstillOppgave") {
+            post("/ferdigstillOppgaver") {
                 val skjema = call.receiveParameters()
                 val foresporselIdInput = skjema["foresporselIdInput"]
                 if (foresporselIdInput.isNullOrEmpty()) {
@@ -88,7 +93,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                 try {
                     val brukernavn = hentBrukernavnFraToken()
                     val batch = NotifikasjonBatcher(notifikasjonService, brukernavn)
-                    val rapport = batch.ferdigstillOppgave(foresporselIdInput)
+                    val rapport = batch.ferdigstillOppgaver(foresporselIdInput)
                     logger().info(rapport.toString())
                     call.respond(HttpStatusCode.OK, rapport)
                 } catch (e: IllegalArgumentException) {
@@ -97,6 +102,26 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                 } catch (ex: Exception) {
                     call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
                 }
+            }
+            post("/ferdigstillSaker") {
+                val skjema = call.receiveParameters()
+                val foresporselIdInput = skjema["foresporselIdInput"]
+                if (foresporselIdInput.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                try {
+                    val brukernavn = hentBrukernavnFraToken()
+                    val forespoerselBatch = NotifikasjonBatcher(notifikasjonService, brukernavn)
+                    val rapport = forespoerselBatch.ferdigstillSaker(foresporselIdInput)
+                    call.respond(HttpStatusCode.OK, rapport)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest,"Ugyldig input: ${e.message}")
+                    return@post
+                } catch (ex: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
+                }
+
             }
             post("/slettSaker") {
                 val skjema = call.receiveParameters()
@@ -108,7 +133,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                 try {
                     val brukernavn = hentBrukernavnFraToken()
                     val forespoerselBatch = NotifikasjonBatcher(notifikasjonService, brukernavn)
-                    val rapport = forespoerselBatch.slett(foresporselIdInput)
+                    val rapport = forespoerselBatch.slettSaker(foresporselIdInput)
                     call.respond(HttpStatusCode.OK, rapport)
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest,"Ugyldig input: ${e.message}")

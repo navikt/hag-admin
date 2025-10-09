@@ -2,5 +2,7 @@ login: false
 env:
   - name: ARBEIDSGIVER_NOTIFIKASJON_SCOPE
     value: "api://dev-gcp.fager.notifikasjon-produsent-api/.default"
+  - name: SAK_UTGAATT_URL
+    value: "https://arbeidsgiver.ekstern.dev.nav.no/im-dialog/utgatt"
 ingresses:
   - https://hag-admin.intern.dev.nav.no

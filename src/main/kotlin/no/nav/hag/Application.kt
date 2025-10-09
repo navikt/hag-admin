@@ -36,7 +36,7 @@ fun Application.module() {
 
     val service = when {
         Env.isLocal() -> FakeServiceImpl()
-        else -> NotifikasjonServiceImpl(agNotifikasjonKlient)
+        else -> NotifikasjonServiceImpl(agNotifikasjonKlient, Env.utgaattUrl)
     }
     configureRouting(service)
 }
