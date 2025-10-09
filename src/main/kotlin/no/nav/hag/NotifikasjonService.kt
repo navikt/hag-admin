@@ -24,6 +24,7 @@ class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient
             klient.oppgaveUtgaattByEksternId(
                 eksternId = foresporselId,
                 merkelapp = merkelapp,
+                nyLenke = utgaattUrl,
             )
         }.onFailure { error ->
             logger.error("Fant ikke oppgave under endring til utgått.", error)
