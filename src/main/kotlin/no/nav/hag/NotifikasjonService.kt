@@ -2,6 +2,8 @@ package no.nav.hag
 
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
 import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.enums.SaksStatus
+import no.nav.helsearbeidsgiver.utils.log.logger
+import no.nav.helsearbeidsgiver.utils.log.sikkerLogger
 import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.days
 
@@ -13,10 +15,11 @@ interface NotifikasjonService {
 }
 
 class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient, val utgaattUrl: String) : NotifikasjonService {
-    val logger = LoggerFactory.getLogger(NotifikasjonServiceImpl::class.java)
-    val merkelapp = "Inntektsmelding sykepenger"
-    val ferdigstiltSakLevetid = 90.days // Når en sak ferdigstilles, beholdes den i oversikten i 90 dager før sletting
-    val klient = notifikasjonKlient
+    private val logger = this::class.logger()
+    private val sikkerLogger = sikkerLogger()
+    private val merkelapp = "Inntektsmelding sykepenger"
+    private val ferdigstiltSakLevetid = 90.days // Når en sak ferdigstilles, beholdes den i oversikten i 90 dager før sletting
+    private val klient = notifikasjonKlient
 
     override suspend fun ferdigstillOppgave(foresporselId: String, brukernavn: String) {
         logger.info("Ferdigstiller oppgave for forespørsel: $foresporselId. Utført av $brukernavn")
@@ -27,7 +30,8 @@ class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient
                 nyLenke = utgaattUrl,
             )
         }.onFailure { error ->
-            logger.error("Fant ikke oppgave under endring til utgått.", error)
+            sikkerLogger.error("Fant ikke oppgave under endring til utgått.", error)
+            logger.error("Fant ikke oppgave under endring til utgått.")
             throw error
         }
     }
@@ -43,7 +47,8 @@ class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient
                 hardDeleteOm = ferdigstiltSakLevetid,
             )
         }.onFailure { error ->
-            logger.error("Fant ikke sak under ferdigstilling.", error)
+            sikkerLogger.error("Fant ikke sak under ferdigstilling.", error)
+            logger.error("Fant ikke sak under ferdigstilling.")
             throw error
         }
     }
@@ -56,7 +61,8 @@ class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient
                 merkelapp = merkelapp
             )
         }.onFailure { error ->
-            logger.error("Klarte ikke å slette sak", error)
+            sikkerLogger.error("Klarte ikke å slette sak", error)
+            logger.error("Klarte ikke å slette sak")
             throw error
         }
     }
