@@ -23,6 +23,8 @@ spec:
       rules:
         - application: notifikasjon-produsent-api
           namespace: fager
+        - application: logging
+          namespace: nais-system
   env:
     - name: ARBEIDSGIVER_NOTIFIKASJON_API_URL
       value: "http://notifikasjon-produsent-api.fager/api/graphql"
@@ -46,6 +48,4 @@ spec:
   observability:
     logging:
       destinations:
-        - id: secure_logs
-  secureLogs:
-    enabled: true
+        - id: loki
