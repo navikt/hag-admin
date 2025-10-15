@@ -34,7 +34,6 @@ import no.nav.hag.domain.NotifikasjonBatcher
 import no.nav.helsearbeidsgiver.utils.log.logger
 
 fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
-
     routing {
         staticResources("/admin-ui", "admin-ui")
         get("/styles.css") {
@@ -62,7 +61,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                         }
                         p {
                             text(
-                                "Logget inn som: $brukernavn"
+                                "Logget inn som: $brukernavn",
                             )
                         }
                         p {
@@ -99,7 +98,7 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                     logger().info(rapport.toString())
                     call.respond(HttpStatusCode.OK, rapport)
                 } catch (e: IllegalArgumentException) {
-                    call.respond(HttpStatusCode.BadRequest,"Ugyldig input: ${e.message}")
+                    call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
                     return@post
                 } catch (ex: Exception) {
                     call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
@@ -118,12 +117,11 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                     val rapport = forespoerselBatch.ferdigstillSaker(foresporselIdInput)
                     call.respond(HttpStatusCode.OK, rapport)
                 } catch (e: IllegalArgumentException) {
-                    call.respond(HttpStatusCode.BadRequest,"Ugyldig input: ${e.message}")
+                    call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
                     return@post
                 } catch (ex: Exception) {
                     call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
                 }
-
             }
             post("/slettSaker") {
                 val skjema = call.receiveParameters()
@@ -138,12 +136,11 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                     val rapport = forespoerselBatch.slettSaker(foresporselIdInput)
                     call.respond(HttpStatusCode.OK, rapport)
                 } catch (e: IllegalArgumentException) {
-                    call.respond(HttpStatusCode.BadRequest,"Ugyldig input: ${e.message}")
+                    call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
                     return@post
                 } catch (ex: Exception) {
                     call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
                 }
-
             }
         }
     }

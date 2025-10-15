@@ -5,6 +5,7 @@ import com.auth0.jwt.interfaces.Claim
 import io.ktor.http.auth.AuthScheme
 
 fun String?.readClaim(name: String): Claim? =
-    this?.removePrefix("${AuthScheme.Bearer} ")
+    this
+        ?.removePrefix("${AuthScheme.Bearer} ")
         ?.let(JWT::decode)
         ?.getClaim(name)

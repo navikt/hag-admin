@@ -26,17 +26,20 @@ fun Application.module() {
 
     configureSecurity(authClient, disabled = isTestMode)
     install(ContentNegotiation) {
-        json(Json {
-            prettyPrint = true
-            isLenient = true
-        })
+        json(
+            Json {
+                prettyPrint = true
+                isLenient = true
+            },
+        )
     }
     val tokenGetter = authClient.tokenGetter(Env.agNotifikasjonScope)
     val agNotifikasjonKlient = ArbeidsgiverNotifikasjonKlient(Env.agNotifikasjonUrl, tokenGetter)
 
-    val service = when {
-        Env.isLocal() -> FakeServiceImpl()
-        else -> NotifikasjonServiceImpl(agNotifikasjonKlient, Env.utgaattUrl)
-    }
+    val service =
+        when {
+            Env.isLocal() -> FakeServiceImpl()
+            else -> NotifikasjonServiceImpl(agNotifikasjonKlient, Env.utgaattUrl)
+        }
     configureRouting(service)
 }

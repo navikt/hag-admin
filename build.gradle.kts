@@ -7,6 +7,7 @@ plugins {
     kotlin("jvm") version "2.2.20"
     kotlin("plugin.serialization") version "2.2.20"
     id("io.ktor.plugin") version "3.1.2"
+    id("org.jmailen.kotlinter") version "5.2.0"
 }
 
 group = "no.nav.hag"
