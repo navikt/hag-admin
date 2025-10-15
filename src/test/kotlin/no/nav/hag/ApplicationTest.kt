@@ -19,35 +19,37 @@ import kotlin.test.assertEquals
 
 class ApplicationTest {
     @Test
-    fun testRoot() = testApplication {
-        val authClient = mockk<AuthClient>()
+    fun testRoot() =
+        testApplication {
+            val authClient = mockk<AuthClient>()
 
-        val mockToken =
-            JWT.create()
-                .withClaim("NAVident", "John Ronald Reuel")
-                .withArrayClaim("groups", arrayOf(GROUP_ID_HAG))
-                .sign(Algorithm.HMAC256("super secret"))
+            val mockToken =
+                JWT
+                    .create()
+                    .withClaim("NAVident", "John Ronald Reuel")
+                    .withArrayClaim("groups", arrayOf(GROUP_ID_HAG))
+                    .sign(Algorithm.HMAC256("super secret"))
 
-        coEvery { authClient.introspect(mockToken) } returns true
+            coEvery { authClient.introspect(mockToken) } returns true
 
-        application {
-            configureSecurity(authClient, disabled = false)
-            configureRouting(FakeServiceImpl())
-        }
-
-        client.get("/") {
-            headers {
-                append("Authorization", "Bearer $mockToken")
+            application {
+                configureSecurity(authClient, disabled = false)
+                configureRouting(FakeServiceImpl())
             }
-        }.apply {
-            println(bodyAsText())
-            assertEquals(HttpStatusCode.OK, status)
-        }
-        client.get("/admin-ui/ferdigstillOppgaver-form.html").apply {
-            assertEquals(HttpStatusCode.OK, status)
 
+            client
+                .get("/") {
+                    headers {
+                        append("Authorization", "Bearer $mockToken")
+                    }
+                }.apply {
+                    println(bodyAsText())
+                    assertEquals(HttpStatusCode.OK, status)
+                }
+            client.get("/admin-ui/ferdigstillOppgaver-form.html").apply {
+                assertEquals(HttpStatusCode.OK, status)
+            }
         }
-    }
 
     @Test
     fun testKlient() {

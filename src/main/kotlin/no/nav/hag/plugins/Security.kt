@@ -1,6 +1,5 @@
 package no.nav.hag.plugins
 
-
 import io.ktor.server.application.Application
 import io.ktor.server.auth.UserIdPrincipal
 import io.ktor.server.auth.authentication
@@ -11,7 +10,10 @@ import no.nav.hag.Env
 
 const val GROUP_ID_HAG = "e3ab1801-e5a6-48ca-9c3b-5a91ce182c57"
 
-fun Application.configureSecurity(authClient: AuthClient, disabled: Boolean = false) {
+fun Application.configureSecurity(
+    authClient: AuthClient,
+    disabled: Boolean = false,
+) {
     if (disabled && Env.isTest()) {
         authentication {
             basic {

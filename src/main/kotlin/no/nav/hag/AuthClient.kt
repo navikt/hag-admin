@@ -27,9 +27,7 @@ class AuthClient {
             }
         }
 
-    fun tokenGetter(
-        target: String,
-    ): () -> String =
+    fun tokenGetter(target: String): () -> String =
         {
             runBlocking {
                 httpClient
@@ -45,9 +43,7 @@ class AuthClient {
             }
         }
 
-    suspend fun introspect(
-        accessToken: String,
-    ): Boolean =
+    suspend fun introspect(accessToken: String): Boolean =
         httpClient
             .submitForm(
                 url = tokenIntrospectionEndpoint,

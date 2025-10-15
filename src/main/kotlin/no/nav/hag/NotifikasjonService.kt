@@ -7,21 +7,37 @@ import no.nav.helsearbeidsgiver.utils.log.sikkerLogger
 import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.days
 
-
 interface NotifikasjonService {
-    suspend fun ferdigstillOppgave(foresporselId: String, brukernavn: String)
-    suspend fun ferdigstillSak(foresporselId: String, brukernavn: String)
-    suspend fun slettSak(foresporselId: String, brukernavn: String)
+    suspend fun ferdigstillOppgave(
+        foresporselId: String,
+        brukernavn: String,
+    )
+
+    suspend fun ferdigstillSak(
+        foresporselId: String,
+        brukernavn: String,
+    )
+
+    suspend fun slettSak(
+        foresporselId: String,
+        brukernavn: String,
+    )
 }
 
-class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient, val utgaattUrl: String) : NotifikasjonService {
+class NotifikasjonServiceImpl(
+    notifikasjonKlient: ArbeidsgiverNotifikasjonKlient,
+    val utgaattUrl: String,
+) : NotifikasjonService {
     private val logger = this::class.logger()
     private val sikkerLogger = sikkerLogger()
     private val merkelapp = "Inntektsmelding sykepenger"
     private val ferdigstiltSakLevetid = 90.days // Når en sak ferdigstilles, beholdes den i oversikten i 90 dager før sletting
     private val klient = notifikasjonKlient
 
-    override suspend fun ferdigstillOppgave(foresporselId: String, brukernavn: String) {
+    override suspend fun ferdigstillOppgave(
+        foresporselId: String,
+        brukernavn: String,
+    ) {
         logger.info("Ferdigstiller oppgave for forespørsel: $foresporselId. Utført av $brukernavn")
         runCatching {
             klient.oppgaveUtgaattByEksternId(
@@ -36,7 +52,10 @@ class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient
         }
     }
 
-    override suspend fun ferdigstillSak(foresporselId: String, brukernavn: String) {
+    override suspend fun ferdigstillSak(
+        foresporselId: String,
+        brukernavn: String,
+    ) {
         logger.info("Ferdigstiller sak for forespørsel: $foresporselId. Utført av $brukernavn")
         runCatching {
             klient.nyStatusSakByGrupperingsid(
@@ -53,12 +72,15 @@ class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient
         }
     }
 
-    override suspend fun slettSak(foresporselId: String, brukernavn: String) {
+    override suspend fun slettSak(
+        foresporselId: String,
+        brukernavn: String,
+    ) {
         logger.info("Sletter sak for forespørsel $foresporselId. Utført av $brukernavn")
         runCatching {
             klient.hardDeleteSakByGrupperingsid(
                 grupperingsid = foresporselId,
-                merkelapp = merkelapp
+                merkelapp = merkelapp,
             )
         }.onFailure { error ->
             sikkerLogger.error("Klarte ikke å slette sak", error)
@@ -66,21 +88,29 @@ class NotifikasjonServiceImpl(notifikasjonKlient: ArbeidsgiverNotifikasjonKlient
             throw error
         }
     }
-
 }
 
 class FakeServiceImpl : NotifikasjonService {
     val logger = LoggerFactory.getLogger(FakeServiceImpl::class.java)
 
-    override suspend fun ferdigstillOppgave(foresporselId: String, brukernavn: String) {
+    override suspend fun ferdigstillOppgave(
+        foresporselId: String,
+        brukernavn: String,
+    ) {
         logger.info("Bruker: $brukernavn ferdigstilte oppgave for forespørselId: $foresporselId")
     }
 
-    override suspend fun ferdigstillSak(foresporselId: String, brukernavn: String) {
+    override suspend fun ferdigstillSak(
+        foresporselId: String,
+        brukernavn: String,
+    ) {
         logger.info("Bruker: $brukernavn ferdigstilte sak for forespørselId: $foresporselId")
     }
 
-    override suspend fun slettSak(foresporselId: String, brukernavn: String) {
+    override suspend fun slettSak(
+        foresporselId: String,
+        brukernavn: String,
+    ) {
         logger.info("Bruker: $brukernavn slettet sak for forespørselId: $foresporselId")
     }
 }
