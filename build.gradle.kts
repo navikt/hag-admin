@@ -1,3 +1,5 @@
+import kotlin.collections.forEach
+
 val kotlin_version: String by project
 val ktor_version: String by project
 val logback_version: String by project
@@ -32,9 +34,19 @@ repositories {
 
 tasks {
     named<Jar>("jar") {
-
+        val dependencies = configurations.runtimeClasspath.get()
         manifest {
             attributes["Main-Class"] = "no.nav.hag.ApplicationKt"
+            attributes["Class-Path"] = dependencies.joinToString(separator = " ") { it.name }
+        }
+
+        doLast {
+            dependencies.forEach {
+                val file = layout.buildDirectory.file("libs/${it.name}").get().asFile
+                if (!file.exists()) {
+                    it.copyTo(file)
+                }
+            }
         }
     }
 }

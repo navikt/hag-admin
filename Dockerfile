@@ -1,5 +1,6 @@
 FROM gcr.io/distroless/java21
-COPY build/libs/*.jar app.jar
+COPY build/libs/hag-notifikasjon-admin*.jar app.jar
+COPY build/libs/*.jar .
 ENV JAVA_OPTS='-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp'
 ENV LANG='nb_NO.UTF-8' LANGUAGE='nb_NO:nb' LC_ALL='nb_NO.UTF-8' TZ="Europe/Oslo"
 ENTRYPOINT ["java", "-jar", "/app.jar"]
