@@ -64,7 +64,7 @@ dependencies {
     implementation("io.ktor:ktor-server-html-builder:$ktor_version")
     implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
     implementation("no.nav.helsearbeidsgiver:arbeidsgiver-notifikasjon-klient:$arbeidsgiver_notifikasjon_klient_version")
-    implementation("no.nav.helsearbeidsgiver:utils:0.9.0")
+    implementation("no.nav.helsearbeidsgiver:utils:0.10.1")
     implementation("org.jetbrains.kotlin-wrappers:kotlin-css:1.0.0-pre.817")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 
