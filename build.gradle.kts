@@ -30,6 +30,14 @@ repositories {
     }
 }
 
+tasks {
+    named<Jar>("jar") {
+
+        manifest {
+            attributes["Main-Class"] = "no.nav.hag.ApplicationKt"
+        }
+    }
+}
 dependencies {
     implementation ("net.logstash.logback:logstash-logback-encoder:8.0")
     implementation("ch.qos.logback:logback-classic:$logback_version")
