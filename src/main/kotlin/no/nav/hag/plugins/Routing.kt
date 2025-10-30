@@ -40,9 +40,9 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
             call.respondCss {
                 body {
                     if (Env.isTest()) {
-                        backgroundColor = Color.limeGreen
+                        backgroundColor = Color.mediumSeaGreen
                     } else {
-                        backgroundColor = Color.red
+                        backgroundColor = Color.indianRed
                     }
                     margin = Margin(0.px)
                 }
