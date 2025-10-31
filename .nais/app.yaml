@@ -30,7 +30,7 @@ spec:
     - name: ARBEIDSGIVER_NOTIFIKASJON_API_URL
       value: "http://notifikasjon-produsent-api.fager/api/graphql"
     - name: JDK_JAVA_OPTIONS
-      value: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -Xmx32M
+      value: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -Xmx64M
     {{#each env as |var|}}
     - name: {{ var.name }}
       value: "{{ var.value }}"
@@ -47,7 +47,7 @@ spec:
   resources:
     limits:
       cpu: 250m
-      memory: 64Mi
+      memory: 128Mi
     requests:
       cpu: 50m
       memory: 64Mi
