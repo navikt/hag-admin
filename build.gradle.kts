@@ -63,6 +63,7 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-html-builder:$ktor_version")
     implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
+    implementation("io.prometheus:prometheus-metrics-instrumentation-jvm:1.4.2")
     implementation("no.nav.helsearbeidsgiver:arbeidsgiver-notifikasjon-klient:$arbeidsgiver_notifikasjon_klient_version")
     implementation("no.nav.helsearbeidsgiver:utils:0.10.1")
     implementation("org.jetbrains.kotlin-wrappers:kotlin-css:1.0.0-pre.817")

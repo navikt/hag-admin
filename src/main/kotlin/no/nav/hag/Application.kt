@@ -6,6 +6,7 @@ import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.prometheus.metrics.instrumentation.jvm.JvmMetrics
 import kotlinx.serialization.json.Json
 import no.nav.hag.plugins.configureRouting
 import no.nav.hag.plugins.configureSecurity
@@ -18,6 +19,7 @@ fun main() {
 }
 
 fun Application.module() {
+    JvmMetrics.builder().register()
     val logger = LoggerFactory.getLogger(Application::class.java)
     val isTestMode = Env.isTest()
     val authClient = AuthClient()

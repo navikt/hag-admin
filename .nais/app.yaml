@@ -4,6 +4,9 @@ metadata:
   name: hag-admin
   namespace: helsearbeidsgiver
 spec:
+  prometheus:
+    enabled: true
+    path: /metrics
   azure:
     application:
       enabled: true
@@ -45,9 +48,6 @@ spec:
     requests:
       cpu: 50m
       memory: 128Mi
-  prometheus:
-    enabled: true
-    path: /metrics
   observability:
     logging:
       destinations:
