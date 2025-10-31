@@ -8,6 +8,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
 import io.ktor.test.dispatcher.testSuspend
+import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.hag.plugins.GROUP_ID_HAG
@@ -22,6 +23,7 @@ class ApplicationTest {
     fun testRoot() =
         testApplication {
             val authClient = mockk<AuthClient>()
+            val appMicrometerRegistry = mockk<PrometheusMeterRegistry>()
 
             val mockToken =
                 JWT
@@ -34,7 +36,7 @@ class ApplicationTest {
 
             application {
                 configureSecurity(authClient, disabled = false)
-                configureRouting(FakeServiceImpl())
+                configureRouting(FakeServiceImpl(), appMicrometerRegistry)
             }
 
             client

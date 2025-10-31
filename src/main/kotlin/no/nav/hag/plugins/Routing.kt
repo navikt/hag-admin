@@ -16,6 +16,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.util.generateNonce
+import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.css.Color
 import kotlinx.css.CssBuilder
 import kotlinx.css.Margin
@@ -38,7 +39,10 @@ import no.nav.helsearbeidsgiver.utils.log.logger
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.days
 
-fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
+fun Application.configureRouting(
+    notifikasjonService: NotifikasjonService,
+    appMicrometerRegistry: PrometheusMeterRegistry,
+) {
     val cache = LocalCache<String>(LocalCache.Config(1.days, maxEntries = 10_000_000))
     val count = AtomicInteger(0)
     routing {
@@ -54,6 +58,9 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                     margin = Margin(0.px)
                 }
             }
+        }
+        get("/metrics") {
+            call.respond(appMicrometerRegistry.scrape())
         }
         authenticate {
             get("/") {
