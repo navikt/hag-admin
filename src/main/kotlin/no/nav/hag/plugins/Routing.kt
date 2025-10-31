@@ -157,6 +157,7 @@ fun Application.configureRouting(
                 }
             }
             get("/oom") {
+                val maxMemory = Runtime.getRuntime().maxMemory()
                 val totalMemory = Runtime.getRuntime().totalMemory()
                 val freeMemory = Runtime.getRuntime().freeMemory()
                 val usedMemory = totalMemory - freeMemory
@@ -165,6 +166,7 @@ fun Application.configureRouting(
                     HttpStatusCode.OK,
                     MemStats(
                         count = count.get(),
+                        max__Memory = maxMemory / 1_000_000,
                         totalMemory = totalMemory / 1_000_000,
                         _usedMemory = usedMemory / 1_000_000,
                         _freeMemory = freeMemory / 1_000_000,
