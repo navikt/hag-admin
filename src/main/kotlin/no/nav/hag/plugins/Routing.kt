@@ -15,7 +15,6 @@ import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import io.ktor.util.generateNonce
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.css.Color
 import kotlinx.css.CssBuilder
@@ -33,17 +32,12 @@ import kotlinx.html.p
 import no.nav.hag.Env
 import no.nav.hag.NotifikasjonService
 import no.nav.hag.domain.NotifikasjonBatcher
-import no.nav.helsearbeidsgiver.utils.cache.LocalCache
 import no.nav.helsearbeidsgiver.utils.log.logger
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.days
 
 fun Application.configureRouting(
     notifikasjonService: NotifikasjonService,
     appMicrometerRegistry: PrometheusMeterRegistry,
 ) {
-    val cache = LocalCache<String>(LocalCache.Config(1.days, maxEntries = 10_000_000))
-    val count = AtomicInteger(0)
     routing {
         staticResources("/admin-ui", "admin-ui")
         get("/styles.css") {
