@@ -32,7 +32,6 @@ import kotlinx.html.link
 import kotlinx.html.p
 import no.nav.hag.Env
 import no.nav.hag.NotifikasjonService
-import no.nav.hag.domain.MemStats
 import no.nav.hag.domain.NotifikasjonBatcher
 import no.nav.helsearbeidsgiver.utils.cache.LocalCache
 import no.nav.helsearbeidsgiver.utils.log.logger
@@ -156,33 +155,8 @@ fun Application.configureRouting(
                     call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
                 }
             }
-            get("/oom") {
-                val maxMemory = Runtime.getRuntime().maxMemory()
-                val totalMemory = Runtime.getRuntime().totalMemory()
-                val freeMemory = Runtime.getRuntime().freeMemory()
-                val usedMemory = totalMemory - freeMemory
-                cache.getOrPut(count.addAndGet(1).toString()) { generateAnswer() }
-                call.respond(
-                    HttpStatusCode.OK,
-                    MemStats(
-                        count = count.get(),
-                        max__Memory = maxMemory / 1_000_000,
-                        totalMemory = totalMemory / 1_000_000,
-                        _usedMemory = usedMemory / 1_000_000,
-                        _freeMemory = freeMemory / 1_000_000,
-                    ),
-                )
-            }
         }
     }
-}
-
-fun generateAnswer(): String {
-    val answer = StringBuilder()
-    for (i in 1..1_000_000) {
-        answer.append(generateNonce())
-    }
-    return answer.toString()
 }
 
 private fun RoutingContext.hentBrukernavnFraToken(): String =
