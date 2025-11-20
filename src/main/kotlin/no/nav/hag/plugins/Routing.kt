@@ -15,6 +15,7 @@ import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
+import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.css.Color
 import kotlinx.css.CssBuilder
 import kotlinx.css.Margin
@@ -33,7 +34,10 @@ import no.nav.hag.NotifikasjonService
 import no.nav.hag.domain.NotifikasjonBatcher
 import no.nav.helsearbeidsgiver.utils.log.logger
 
-fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
+fun Application.configureRouting(
+    notifikasjonService: NotifikasjonService,
+    appMicrometerRegistry: PrometheusMeterRegistry,
+) {
     routing {
         staticResources("/admin-ui", "admin-ui")
         get("/styles.css") {
@@ -47,6 +51,9 @@ fun Application.configureRouting(notifikasjonService: NotifikasjonService) {
                     margin = Margin(0.px)
                 }
             }
+        }
+        get("/metrics") {
+            call.respond(appMicrometerRegistry.scrape())
         }
         authenticate {
             get("/") {
