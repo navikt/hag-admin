@@ -78,9 +78,8 @@ class NotifikasjonServiceImpl(
     ) {
         logger.info("Sletter sak for forespørsel $foresporselId. Utført av $brukernavn")
         runCatching {
-            klient.hardDeleteSakByGrupperingsid(
-                grupperingsid = foresporselId,
-                merkelapp = merkelapp,
+            klient.hardDeleteSak(
+                id = foresporselId,
             )
         }.onFailure { error ->
             sikkerLogger.error("Klarte ikke å slette sak", error)
