@@ -72,6 +72,12 @@ fun Application.configureRouting(
                             )
                         }
                         p {
+                            a(href = "admin-ui/finnSak-form.html") {
+                                +"Finn sak"
+                            }
+                            +" (Søk opp en sak i Fager)"
+                        }
+                        p {
                             a(href = "admin-ui/ferdigstillOppgaver-form.html") {
                                 +"Ferdigstill oppgaver"
                             }
@@ -89,6 +95,23 @@ fun Application.configureRouting(
                             +" (Sletter hele saken - fjernes umiddelbart fra Min Side Arbeidsgiver-oversikt)"
                         }
                     }
+                }
+            }
+            post("/finnSak") {
+                val skjema = call.receiveParameters()
+                val foresporselIdInput = skjema["foresporselIdInput"]
+                if (foresporselIdInput.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                try {
+                    val sak = notifikasjonService.hentSak(foresporselIdInput)
+                    call.respond(HttpStatusCode.OK, sak)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
+                    return@post
+                } catch (ex: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
                 }
             }
             post("/ferdigstillOppgaver") {
