@@ -2,6 +2,7 @@ package no.nav.hag
 
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
 import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.enums.SaksStatus
+import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.hentsakmedgrupperingsid.Sak
 import no.nav.helsearbeidsgiver.utils.log.logger
 import no.nav.helsearbeidsgiver.utils.log.sikkerLogger
 import org.slf4j.LoggerFactory
@@ -22,6 +23,8 @@ interface NotifikasjonService {
         foresporselId: String,
         brukernavn: String,
     )
+
+    suspend fun hentSak(foresporselId: String): Sak
 }
 
 class NotifikasjonServiceImpl(
@@ -88,6 +91,12 @@ class NotifikasjonServiceImpl(
             throw error
         }
     }
+
+    override suspend fun hentSak(foresporselId: String): Sak {
+        val sak = klient.hentSakMedGrupperingsid(grupperingsid = foresporselId, merkelapp)
+        sikkerLogger.info("Hentet sak: $sak")
+        return sak
+    }
 }
 
 class FakeServiceImpl : NotifikasjonService {
@@ -112,5 +121,9 @@ class FakeServiceImpl : NotifikasjonService {
         brukernavn: String,
     ) {
         logger.info("Bruker: $brukernavn slettet sak for forespørselId: $foresporselId")
+    }
+
+    override suspend fun hentSak(foresporselId: String): Sak {
+        TODO("Not yet implemented")
     }
 }
