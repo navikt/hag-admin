@@ -14,7 +14,10 @@ import io.mockk.mockk
 import no.nav.hag.plugins.GROUP_ID_HAG
 import no.nav.hag.plugins.configureRouting
 import no.nav.hag.plugins.configureSecurity
+import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.Altinn3Ressurs
+import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.AltinnMottaker
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
+import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.enums.Sendevindu
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -57,7 +60,13 @@ class ApplicationTest {
     fun testKlient() {
         val url = "https://notifikasjon-fake-produsent-api.ekstern.dev.nav.no/api/graphql"
         val token = ""
-        val arbeidsgiverNotifikasjonKlient = ArbeidsgiverNotifikasjonKlient(url) { token }
+        val arbeidsgiverNotifikasjonKlient =
+            ArbeidsgiverNotifikasjonKlient(
+                url = url,
+                mottaker = AltinnMottaker.Altinn3(Altinn3Ressurs.INNTEKTSMELDING),
+                getAccessToken = { token },
+                sendevindu = Sendevindu.NKS_AAPNINGSTID,
+            )
         testSuspend {
             val result = arbeidsgiverNotifikasjonKlient.whoami()
             println(result)
