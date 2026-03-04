@@ -39,7 +39,7 @@ class ApplicationTest {
 
             application {
                 configureSecurity(authClient, disabled = false)
-                configureRouting(FakeServiceImpl(), appMicrometerRegistry)
+                configureRouting(FakeServiceImpl(), MockForespoerselService(), appMicrometerRegistry)
             }
 
             client

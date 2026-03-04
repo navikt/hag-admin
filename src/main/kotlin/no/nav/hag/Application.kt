@@ -68,10 +68,10 @@ fun Application.module() {
 
     val forespoerselService = ForespoerselServiceImpl(KafkaConfig.getKafkaProducer())
 
-    val service =
+    val notifikasjonService =
         when {
             Env.isLocal() -> FakeServiceImpl()
             else -> NotifikasjonServiceImpl(agNotifikasjonKlient, Env.utgaattUrl)
         }
-    configureRouting(service, appMicrometerRegistry)
+    configureRouting(notifikasjonService, forespoerselService, appMicrometerRegistry)
 }

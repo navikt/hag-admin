@@ -30,12 +30,15 @@ import kotlinx.html.head
 import kotlinx.html.link
 import kotlinx.html.p
 import no.nav.hag.Env
+import no.nav.hag.ForespoerselService
 import no.nav.hag.NotifikasjonService
+import no.nav.hag.domain.ForespoerselListe
 import no.nav.hag.domain.NotifikasjonBatcher
 import no.nav.helsearbeidsgiver.utils.log.logger
 
 fun Application.configureRouting(
     notifikasjonService: NotifikasjonService,
+    forespoerselService: ForespoerselService,
     appMicrometerRegistry: PrometheusMeterRegistry,
 ) {
     routing {
@@ -165,6 +168,29 @@ fun Application.configureRouting(
                     val forespoerselBatch = NotifikasjonBatcher(notifikasjonService, brukernavn)
                     val rapport = forespoerselBatch.slettSaker(foresporselIdInput)
                     call.respond(HttpStatusCode.OK, rapport)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
+                    return@post
+                } catch (ex: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
+                }
+            }
+            post("/forkast") {
+                val skjema = call.receiveParameters()
+                val batch = skjema["foresporselIdInput"]
+                if (batch.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                try {
+                    // konverter og fjern de som ikke er OK UUIDer
+                    val foresporselIder = ForespoerselListe(batch).konverterInput().values.filterNotNull()
+
+                    for (foresporsel in foresporselIder) {
+                        forespoerselService.forkastForespoersel(foresporsel, hentBrukernavnFraToken())
+                    }
+
+                    call.respond(HttpStatusCode.OK, foresporselIder)
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
                     return@post
