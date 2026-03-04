@@ -197,7 +197,7 @@ fun Application.configureRouting(
                         forespoerselService.forkastForespoersel(foresporsel, hentBrukernavnFraToken())
                     }
 
-                    call.respond(HttpStatusCode.OK, foresporselIder)
+                    call.respond(HttpStatusCode.OK, foresporselIder.toString())
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
                     return@post
