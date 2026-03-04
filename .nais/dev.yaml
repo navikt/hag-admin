@@ -1,4 +1,5 @@
 login: false
+kafkaPool: nav-dev
 env:
   - name: ARBEIDSGIVER_NOTIFIKASJON_SCOPE
     value: "api://dev-gcp.fager.notifikasjon-produsent-api/.default"
