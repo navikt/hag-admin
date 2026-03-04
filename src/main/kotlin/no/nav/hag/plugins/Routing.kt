@@ -97,6 +97,13 @@ fun Application.configureRouting(
                             }
                             +" (Sletter hele saken - fjernes umiddelbart fra Min Side Arbeidsgiver-oversikt)"
                         }
+                        p {
+                            a(href = "admin-ui/forkastForespoersel-form.html") {
+                                +"Forkast forespørsler"
+                            }
+                            +" (Benytt eksponert ForespørselID - setter forespørsel til FORKASTET i StoreBror og LPS-API)"
+                            +" Tilhørende Sak og oppgave i Fager stenges. Spleis vil evt lage ny forespørsel ved behov."
+                        }
                     }
                 }
             }
