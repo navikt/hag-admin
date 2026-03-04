@@ -27,7 +27,7 @@ spec:
         - application: logging
           namespace: nais-system
   kafka:
-    pool: { { kafkaPool } }
+    pool: {{ kafkaPool }}
   env:
     - name: ARBEIDSGIVER_NOTIFIKASJON_API_URL
       value: "http://notifikasjon-produsent-api.fager/api/graphql"
