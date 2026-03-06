@@ -104,6 +104,12 @@ fun Application.configureRouting(
                             +" (Benytt eksponert ForespørselID - setter forespørsel til FORKASTET i StoreBror og LPS-API)"
                             +" Tilhørende Sak og oppgave i Fager stenges. Spleis vil evt lage ny forespørsel ved behov."
                         }
+                        p {
+                            a(href = "admin-ui/forkastForespoersel-form.html") {
+                                +"Synkroniser forespørsler"
+                            }
+                            +" (Send inn vedtaksperiode(r) som er i usync i API - gjør synkronisering mellom StoreBror og LPS-API)"
+                        }
                     }
                 }
             }
@@ -198,6 +204,29 @@ fun Application.configureRouting(
                     }
 
                     call.respond(HttpStatusCode.OK, foresporselIder.toString())
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
+                    return@post
+                } catch (ex: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
+                }
+            }
+            post("/synkroniserForesporsler") {
+                val skjema = call.receiveParameters()
+                val batch = skjema["foresporselIdInput"]
+                if (batch.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                try {
+                    // konverter og fjern de som ikke er OK UUIDer
+                    val vedtaksperiodeIder = ForespoerselListe(batch).konverterInput().values.filterNotNull()
+
+                    for (vedtaksperiodeId in vedtaksperiodeIder) {
+                        forespoerselService.synkroniserForesporsler(vedtaksperiodeId, hentBrukernavnFraToken())
+                    }
+
+                    call.respond(HttpStatusCode.OK, vedtaksperiodeIder.toString())
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
                     return@post

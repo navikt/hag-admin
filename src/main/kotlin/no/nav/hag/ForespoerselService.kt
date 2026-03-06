@@ -4,6 +4,8 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
 import no.nav.hag.kafkaproducer.KafkaConfig.FORESPOERSEL_MANUELT_FORKASTET
+import no.nav.hag.kafkaproducer.KafkaConfig.HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID
+import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_BEHOV
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_ID
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_NOTIS
 import no.nav.helsearbeidsgiver.utils.json.toJson
@@ -20,6 +22,11 @@ interface ForespoerselService {
         foresporselId: UUID,
         brukernavn: String,
     )
+
+    suspend fun synkroniserForesporsler(
+        vedtaksperiodeId: UUID,
+        brukernavn: String,
+    )
 }
 
 class ForespoerselServiceImpl(
@@ -34,18 +41,43 @@ class ForespoerselServiceImpl(
         foresporselId: UUID,
         brukernavn: String,
     ) {
-        logger.info("Forkaster forespørsel: $foresporselId. Utført av $brukernavn")
-        sikkerLogger.info("Forkaster forespørsel: $foresporselId. Utført av $brukernavn")
+        "Forkaster forespørsel: $foresporselId. Utført av $brukernavn".also {
+            logger.info(it)
+            sikkerLogger.info(it)
+        }
         val kafkaMessage =
             mapOf(
                 PRI_FELT_NAVN_NOTIS to FORESPOERSEL_MANUELT_FORKASTET.toJson(),
                 PRI_FELT_NAVN_FORESPOERSEL_ID to foresporselId.toJson(),
             )
+        sendTilKafka(kafkaMessage, foresporselId)
+    }
+
+    override suspend fun synkroniserForesporsler(
+        vedtaksperiodeId: UUID,
+        brukernavn: String,
+    ) {
+        "Synkroniserer på vedtaksperiode: $vedtaksperiodeId. Utført av $brukernavn".also {
+            logger.info(it)
+            sikkerLogger.info(it)
+        }
+        val kafkaMessage =
+            mapOf(
+                PRI_FELT_NAVN_BEHOV to HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID.toJson(),
+                PRI_FELT_NAVN_FORESPOERSEL_ID to vedtaksperiodeId.toJson(),
+            )
+        sendTilKafka(kafkaMessage, vedtaksperiodeId)
+    }
+
+    private fun sendTilKafka(
+        kafkaMessage: Map<String, JsonElement>,
+        key: UUID,
+    ) {
         runCatching {
             kafkaProducer.send(
                 ProducerRecord(
                     topic,
-                    foresporselId.toString(),
+                    key.toString(),
                     kafkaMessage.toJsonStr(
                         MapSerializer(String.serializer(), JsonElement.serializer()),
                     ),
@@ -67,5 +99,12 @@ class MockForespoerselService : ForespoerselService {
         brukernavn: String,
     ) {
         logger.info("Forkaster forespørsel: $foresporselId. Utført av $brukernavn")
+    }
+
+    override suspend fun synkroniserForesporsler(
+        vedtaksperiodeId: UUID,
+        brukernavn: String,
+    ) {
+        logger.info("Synkroniserer: $vedtaksperiodeId. Utført av $brukernavn")
     }
 }
