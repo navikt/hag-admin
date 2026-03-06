@@ -8,6 +8,7 @@ import no.nav.hag.kafkaproducer.KafkaConfig.HENT_FORESPOERSLER_FOR_VEDTAKSPERIOD
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_BEHOV
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_ID
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_NOTIS
+import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_VEDTAKSPERIODE_ID
 import no.nav.helsearbeidsgiver.utils.json.toJson
 import no.nav.helsearbeidsgiver.utils.json.toJsonStr
 import no.nav.helsearbeidsgiver.utils.log.logger
@@ -64,7 +65,7 @@ class ForespoerselServiceImpl(
         val kafkaMessage =
             mapOf(
                 PRI_FELT_NAVN_BEHOV to HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID.toJson(),
-                PRI_FELT_NAVN_FORESPOERSEL_ID to vedtaksperiodeId.toJson(),
+                PRI_FELT_NAVN_VEDTAKSPERIODE_ID to vedtaksperiodeId.toJson(),
             )
         sendTilKafka(kafkaMessage, vedtaksperiodeId)
     }
