@@ -105,7 +105,7 @@ fun Application.configureRouting(
                             +" Tilhørende Sak og oppgave i Fager stenges. Spleis vil evt lage ny forespørsel ved behov."
                         }
                         p {
-                            a(href = "admin-ui/synkroniserForespoersel-form.html") {
+                            a(href = "admin-ui/synkroniserForespoersler-form.html") {
                                 +"Synkroniser forespørsler"
                             }
                             +" (Send inn vedtaksperiode(r) som er i usync i API - gjør synkronisering mellom StoreBror og LPS-API)"
