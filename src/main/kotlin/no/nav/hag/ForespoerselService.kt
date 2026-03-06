@@ -3,6 +3,9 @@ package no.nav.hag
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
+import no.nav.hag.kafkaproducer.KafkaConfig.FORESPOERSEL_MANUELT_FORKASTET
+import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_ID
+import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_NOTIS
 import no.nav.helsearbeidsgiver.utils.json.toJson
 import no.nav.helsearbeidsgiver.utils.json.toJsonStr
 import no.nav.helsearbeidsgiver.utils.log.logger
@@ -35,8 +38,8 @@ class ForespoerselServiceImpl(
         sikkerLogger.info("Forkaster forespørsel: $foresporselId. Utført av $brukernavn")
         val kafkaMessage =
             mapOf(
-                "notis" to "FORESPOERSEL_MANUELT_FORKASTET".toJson(),
-                "forespoerselId" to foresporselId.toJson(),
+                PRI_FELT_NAVN_NOTIS to FORESPOERSEL_MANUELT_FORKASTET.toJson(),
+                PRI_FELT_NAVN_FORESPOERSEL_ID to foresporselId.toJson(),
             )
         runCatching {
             kafkaProducer.send(

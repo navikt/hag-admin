@@ -16,6 +16,10 @@ object KafkaConfig {
 
     fun getKafkaProducer(): KafkaProducer<String, String> = kafkaProducer
 
+    const val PRI_FELT_NAVN_NOTIS = "notis"
+    const val PRI_FELT_NAVN_FORESPOERSEL_ID = "forespoerselId"
+    const val FORESPOERSEL_MANUELT_FORKASTET = "FORESPOERSEL_MANUELT_FORKASTET"
+
     private fun createProducer(): KafkaProducer<String, String> =
         KafkaProducer(
             kafkaProperties(),
