@@ -2,6 +2,7 @@ import kotlin.collections.forEach
 
 val kotlin_version: String by project
 val ktor_version: String by project
+val kafka_client_version: String by project
 val logback_version: String by project
 val mockk_version: String by project
 val arbeidsgiver_notifikasjon_klient_version: String by project
@@ -69,6 +70,7 @@ dependencies {
     implementation("no.nav.helsearbeidsgiver:utils:0.10.1")
     implementation("org.jetbrains.kotlin-wrappers:kotlin-css:1.0.0-pre.817")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    implementation("org.apache.kafka:kafka-clients:$kafka_client_version")
 
     testImplementation("io.ktor:ktor-client-core:$ktor_version")
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktor_version")
