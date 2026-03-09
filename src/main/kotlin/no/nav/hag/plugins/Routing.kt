@@ -30,12 +30,15 @@ import kotlinx.html.head
 import kotlinx.html.link
 import kotlinx.html.p
 import no.nav.hag.Env
+import no.nav.hag.ForespoerselService
 import no.nav.hag.NotifikasjonService
+import no.nav.hag.domain.ForespoerselListe
 import no.nav.hag.domain.NotifikasjonBatcher
 import no.nav.helsearbeidsgiver.utils.log.logger
 
 fun Application.configureRouting(
     notifikasjonService: NotifikasjonService,
+    forespoerselService: ForespoerselService,
     appMicrometerRegistry: PrometheusMeterRegistry,
 ) {
     routing {
@@ -93,6 +96,19 @@ fun Application.configureRouting(
                                 +"Slett saker"
                             }
                             +" (Sletter hele saken - fjernes umiddelbart fra Min Side Arbeidsgiver-oversikt)"
+                        }
+                        p {
+                            a(href = "admin-ui/forkastForespoersel-form.html") {
+                                +"Forkast forespørsler"
+                            }
+                            +" (Benytt eksponert ForespørselID - setter forespørsel til FORKASTET i StoreBror og LPS-API)"
+                            +" Tilhørende Sak og oppgave i Fager stenges. Spleis vil evt lage ny forespørsel ved behov."
+                        }
+                        p {
+                            a(href = "admin-ui/synkroniserForespoersler-form.html") {
+                                +"Synkroniser forespørsler"
+                            }
+                            +" (Send inn vedtaksperiode(r) som er i usync i API - gjør synkronisering mellom StoreBror og LPS-API)"
                         }
                     }
                 }
@@ -165,6 +181,52 @@ fun Application.configureRouting(
                     val forespoerselBatch = NotifikasjonBatcher(notifikasjonService, brukernavn)
                     val rapport = forespoerselBatch.slettSaker(foresporselIdInput)
                     call.respond(HttpStatusCode.OK, rapport)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
+                    return@post
+                } catch (ex: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
+                }
+            }
+            post("/forkast") {
+                val skjema = call.receiveParameters()
+                val batch = skjema["foresporselIdInput"]
+                if (batch.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                try {
+                    // konverter og fjern de som ikke er OK UUIDer
+                    val foresporselIder = ForespoerselListe(batch).konverterInput().values.filterNotNull()
+
+                    for (foresporsel in foresporselIder) {
+                        forespoerselService.forkastForespoersel(foresporsel, hentBrukernavnFraToken())
+                    }
+
+                    call.respond(HttpStatusCode.OK, foresporselIder.toString())
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
+                    return@post
+                } catch (ex: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
+                }
+            }
+            post("/synkroniserForesporsler") {
+                val skjema = call.receiveParameters()
+                val batch = skjema["foresporselIdInput"]
+                if (batch.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                try {
+                    // konverter og fjern de som ikke er OK UUIDer
+                    val vedtaksperiodeIder = ForespoerselListe(batch).konverterInput().values.filterNotNull()
+
+                    for (vedtaksperiodeId in vedtaksperiodeIder) {
+                        forespoerselService.synkroniserForesporsler(vedtaksperiodeId, hentBrukernavnFraToken())
+                    }
+
+                    call.respond(HttpStatusCode.OK, vedtaksperiodeIder.toString())
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
                     return@post
