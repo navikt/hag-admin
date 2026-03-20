@@ -34,6 +34,8 @@ import no.nav.hag.ForespoerselService
 import no.nav.hag.NotifikasjonService
 import no.nav.hag.domain.ForespoerselListe
 import no.nav.hag.domain.NotifikasjonBatcher
+import no.nav.hag.domain.Resultat
+import no.nav.hag.domain.Status
 import no.nav.helsearbeidsgiver.utils.log.logger
 
 fun Application.configureRouting(
@@ -196,14 +198,23 @@ fun Application.configureRouting(
                     return@post
                 }
                 try {
-                    // konverter og fjern de som ikke er OK UUIDer
-                    val foresporselIder = ForespoerselListe(batch).konverterInput().values.filterNotNull()
+                    val foresporselIder = ForespoerselListe(batch).konverterInput()
 
-                    for (foresporsel in foresporselIder) {
-                        forespoerselService.forkastForespoersel(foresporsel, hentBrukernavnFraToken())
-                    }
+                    val resultat =
+                        foresporselIder.map {
+                            if (it.value == null) {
+                                Resultat(it.key, Status.UGYLDIG)
+                            } else {
+                                try {
+                                    forespoerselService.forkastForespoersel(it.value!!, hentBrukernavnFraToken())
+                                    Resultat(it.key, Status.OK)
+                                } catch (ex: Exception) {
+                                    Resultat(it.key, Status.FEILET)
+                                }
+                            }
+                        }
 
-                    call.respond(HttpStatusCode.OK, foresporselIder.toString())
+                    call.respond(HttpStatusCode.OK, resultat.toString())
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
                     return@post
@@ -219,14 +230,22 @@ fun Application.configureRouting(
                     return@post
                 }
                 try {
-                    // konverter og fjern de som ikke er OK UUIDer
-                    val vedtaksperiodeIder = ForespoerselListe(batch).konverterInput().values.filterNotNull()
-
-                    for (vedtaksperiodeId in vedtaksperiodeIder) {
-                        forespoerselService.synkroniserForesporsler(vedtaksperiodeId, hentBrukernavnFraToken())
-                    }
-
-                    call.respond(HttpStatusCode.OK, vedtaksperiodeIder.toString())
+                    val vedtaksperiodeIder = ForespoerselListe(batch).konverterInput()
+                    val resultat =
+                        vedtaksperiodeIder.map {
+                            // TODO: de-dupliser dette
+                            if (it.value == null) {
+                                Resultat(it.key, Status.UGYLDIG)
+                            } else {
+                                try {
+                                    forespoerselService.synkroniserForesporsler(it.value!!, hentBrukernavnFraToken())
+                                    Resultat(it.key, Status.OK)
+                                } catch (ex: Exception) {
+                                    Resultat(it.key, Status.FEILET)
+                                }
+                            }
+                        }
+                    call.respond(HttpStatusCode.OK, resultat.toString())
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
                     return@post
