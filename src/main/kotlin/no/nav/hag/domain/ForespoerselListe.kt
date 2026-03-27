@@ -6,13 +6,13 @@ class ForespoerselListe(
     val liste: String,
 ) {
     /*
-    Tar imot en String med UUIDer separert med semikolon.
+    Tar imot en String med UUIDer separert med linjeskift. lines() takler CRLF, LF og CR
     Fjerner whitespace og returnerer et map med orginalString som peker på UUID, null hvis ugyldig UUID
      */
     fun konverterInput(): Map<String, UUID?> {
         if (liste.isBlank()) return emptyMap()
         return liste
-            .split(";")
+            .lines()
             .map {
                 it.trim()
             }.filter { it.isNotBlank() }
