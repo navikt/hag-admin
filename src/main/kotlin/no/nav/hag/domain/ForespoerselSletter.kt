@@ -14,6 +14,7 @@ enum class Operasjon {
     SLETT,
     FERDIGSTILL_OPPGAVE,
     FERDIGSTILL_SAK,
+    NY_PAAMINNELSE,
 }
 
 @Serializable
@@ -29,6 +30,8 @@ class NotifikasjonBatcher(
     suspend fun slettSaker(batch: String): List<Resultat> = utfoerBatchOperasjon(Operasjon.SLETT, batch)
 
     suspend fun ferdigstillOppgaver(batch: String): List<Resultat> = utfoerBatchOperasjon(Operasjon.FERDIGSTILL_OPPGAVE, batch)
+
+    suspend fun nyPaaminnelse(batch: String): List<Resultat> = utfoerBatchOperasjon(Operasjon.NY_PAAMINNELSE, batch)
 
     suspend fun ferdigstillSaker(batch: String): List<Resultat> = utfoerBatchOperasjon(Operasjon.FERDIGSTILL_SAK, batch)
 
@@ -47,6 +50,7 @@ class NotifikasjonBatcher(
                             Operasjon.FERDIGSTILL_OPPGAVE -> notifikasjonService.ferdigstillOppgave(it.key, brukernavn)
                             Operasjon.SLETT -> notifikasjonService.slettSak(it.key, brukernavn)
                             Operasjon.FERDIGSTILL_SAK -> notifikasjonService.ferdigstillSak(it.key, brukernavn)
+                            Operasjon.NY_PAAMINNELSE -> notifikasjonService.lagNyPaaminnelse(it.key, brukernavn)
                         }
                         Resultat(it.key, Status.OK)
                     } catch (e: Exception) {

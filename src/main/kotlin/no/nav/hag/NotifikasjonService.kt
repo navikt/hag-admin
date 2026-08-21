@@ -1,6 +1,7 @@
 package no.nav.hag
 
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
+import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.Paaminnelse
 import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.enums.SaksStatus
 import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.hentsakmedgrupperingsid.Sak
 import no.nav.helsearbeidsgiver.utils.log.logger
@@ -10,6 +11,11 @@ import kotlin.time.Duration.Companion.days
 
 interface NotifikasjonService {
     suspend fun ferdigstillOppgave(
+        foresporselId: String,
+        brukernavn: String,
+    )
+
+    suspend fun lagNyPaaminnelse(
         foresporselId: String,
         brukernavn: String,
     )
@@ -51,6 +57,33 @@ class NotifikasjonServiceImpl(
         }.onFailure { error ->
             sikkerLogger.error("Fant ikke oppgave under endring til utgått.", error)
             logger.error("Fant ikke oppgave under endring til utgått.")
+            throw error
+        }
+    }
+
+    // Finner fager-oppgave og setter en ny påminnelse
+    override suspend fun lagNyPaaminnelse(
+        foresporselId: String,
+        brukernavn: String,
+    ) {
+        logger.info("Lager ny påminnelse for oppgave for forespørsel: $foresporselId. Utført av $brukernavn")
+        runCatching {
+            klient.endreOppgavePaaminnelserByEksternId(
+                eksternId = foresporselId,
+                merkelapp = merkelapp,
+                paaminnelse =
+                    Paaminnelse(
+                        tittel = "Påminnelse – Vi mangler inntektsmelding for en av deres ansatte",
+                        // bør muligens ta med orgnr i innhold...?
+                        innhold =
+                            "Nav har ennå ikke mottatt inntektsmeldingen for en av deres ansatte. " +
+                                "For at vi skal kunne behandle søknaden om sykepenger, må inntektsmeldingen sendes inn så snart som mulig.",
+                        tidMellomOppgaveopprettelseOgPaaminnelse = "P2M",
+                    ),
+            )
+        }.onFailure { error ->
+            sikkerLogger.error("Fant ikke oppgave.", error)
+            logger.error("Fant ikke oppgave.")
             throw error
         }
     }
@@ -107,6 +140,13 @@ class FakeServiceImpl : NotifikasjonService {
         brukernavn: String,
     ) {
         logger.info("Bruker: $brukernavn ferdigstilte oppgave for forespørselId: $foresporselId")
+    }
+
+    override suspend fun lagNyPaaminnelse(
+        foresporselId: String,
+        brukernavn: String,
+    ) {
+        logger.info("Bruker: $brukernavn lagde ny påminnelse for forespørselId: $foresporselId")
     }
 
     override suspend fun ferdigstillSak(

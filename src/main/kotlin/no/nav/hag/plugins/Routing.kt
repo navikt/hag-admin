@@ -88,6 +88,11 @@ fun Application.configureRouting(
                             }
                         }
                         p {
+                            a(href = "admin-ui/nyPaaminnelse-form.html") {
+                                +"Ny påminnelse (purring) på oppgave"
+                            }
+                        }
+                        p {
                             a(href = "admin-ui/ferdigstillSaker-form.html") {
                                 +"Ferdigstill saker"
                             }
@@ -143,6 +148,26 @@ fun Application.configureRouting(
                     val brukernavn = hentBrukernavnFraToken()
                     val batch = NotifikasjonBatcher(notifikasjonService, brukernavn)
                     val rapport = batch.ferdigstillOppgaver(foresporselIdInput)
+                    logger().info(rapport.toString())
+                    call.respond(HttpStatusCode.OK, rapport)
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
+                    return@post
+                } catch (ex: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
+                }
+            }
+            post("/nyPaaminnelse") {
+                val skjema = call.receiveParameters()
+                val foresporselIdInput = skjema["foresporselIdInput"]
+                if (foresporselIdInput.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                try {
+                    val brukernavn = hentBrukernavnFraToken()
+                    val batch = NotifikasjonBatcher(notifikasjonService, brukernavn)
+                    val rapport = batch.nyPaaminnelse(foresporselIdInput)
                     logger().info(rapport.toString())
                     call.respond(HttpStatusCode.OK, rapport)
                 } catch (e: IllegalArgumentException) {

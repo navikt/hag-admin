@@ -66,7 +66,7 @@ fun Application.module() {
             sendevindu = Sendevindu.NKS_AAPNINGSTID,
         )
 
-    val forespoerselService = ForespoerselServiceImpl(KafkaConfig.getKafkaProducer())
+    val forespoerselService = MockForespoerselService()
 
     val notifikasjonService =
         when {
