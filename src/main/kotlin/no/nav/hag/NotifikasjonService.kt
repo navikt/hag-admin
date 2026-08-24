@@ -78,7 +78,7 @@ class NotifikasjonServiceImpl(
                         innhold =
                             "Nav har ennå ikke mottatt inntektsmeldingen for en av deres ansatte. " +
                                 "For at vi skal kunne behandle søknaden om sykepenger, må inntektsmeldingen sendes inn så snart som mulig.",
-                        tidMellomOppgaveopprettelseOgPaaminnelse = "PT1H", // 265H-13M-39
+                        tidMellomOppgaveopprettelseOgPaaminnelse = "PT1M", // 265H-13M-39
                     ),
             )
         }.onFailure { error ->
