@@ -8,6 +8,7 @@ import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.hentsa
 import no.nav.helsearbeidsgiver.utils.log.logger
 import no.nav.helsearbeidsgiver.utils.log.sikkerLogger
 import org.slf4j.LoggerFactory
+import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.days
 
 interface NotifikasjonService {
@@ -79,6 +80,7 @@ class NotifikasjonServiceImpl(
                         innhold =
                             "Nav har ennå ikke mottatt inntektsmeldingen for en av deres ansatte. " +
                                 "For at vi skal kunne behandle søknaden om sykepenger, må inntektsmeldingen sendes inn så snart som mulig.",
+                        eksaktTid = LocalDateTime.now().plusMinutes(5),
                         tidMellomOppgaveopprettelseOgPaaminnelse = "PT1M", // 265H-13M-39
                     ),
             )
