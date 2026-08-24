@@ -112,6 +112,12 @@ fun Application.configureRouting(
                             }
                             +" (Send inn vedtaksperiode(r) som er i usync i API - gjør synkronisering mellom StoreBror og LPS-API)"
                         }
+                        p {
+                            a(href = "admin-ui/overstyrPaaminnelse-form.html") {
+                                +"Overstyr påminnelse"
+                            }
+                            +" (Trigger oppdatering av påminnelse for forespørsel(er) via Kafka)"
+                        }
                     }
                 }
             }
@@ -239,6 +245,36 @@ fun Application.configureRouting(
                             } else {
                                 try {
                                     forespoerselService.synkroniserForesporsler(it.value!!, hentBrukernavnFraToken())
+                                    Resultat(it.key, Status.OK)
+                                } catch (ex: Exception) {
+                                    Resultat(it.key, Status.FEILET)
+                                }
+                            }
+                        }
+                    call.respond(HttpStatusCode.OK, resultat.toString())
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, "Ugyldig input: ${e.message}")
+                    return@post
+                } catch (ex: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
+                }
+            }
+            post("/overstyrPaaminnelse") {
+                val skjema = call.receiveParameters()
+                val batch = skjema["foresporselIdInput"]
+                if (batch.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                try {
+                    val forespoerselIder = ForespoerselListe(batch).konverterInput()
+                    val resultat =
+                        forespoerselIder.map {
+                            if (it.value == null) {
+                                Resultat(it.key, Status.UGYLDIG)
+                            } else {
+                                try {
+                                    forespoerselService.overstyrPaaminnelse(it.value!!, hentBrukernavnFraToken())
                                     Resultat(it.key, Status.OK)
                                 } catch (ex: Exception) {
                                     Resultat(it.key, Status.FEILET)

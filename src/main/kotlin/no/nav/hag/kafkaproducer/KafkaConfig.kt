@@ -22,6 +22,7 @@ object KafkaConfig {
     const val PRI_FELT_NAVN_VEDTAKSPERIODE_ID = "vedtaksperiode_id"
     const val FORESPOERSEL_MANUELT_FORKASTET = "FORESPOERSEL_MANUELT_FORKASTET"
     const val HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID = "HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID"
+    const val OVERSTYR_OPPGAVE_PAAMINNELSE_REQUESTED = "OVERSTYR_OPPGAVE_PAAMINNELSE_REQUESTED"
 
     private fun createProducer(): KafkaProducer<String, String> =
         KafkaProducer(

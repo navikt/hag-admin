@@ -5,6 +5,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
 import no.nav.hag.kafkaproducer.KafkaConfig.FORESPOERSEL_MANUELT_FORKASTET
 import no.nav.hag.kafkaproducer.KafkaConfig.HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID
+import no.nav.hag.kafkaproducer.KafkaConfig.OVERSTYR_OPPGAVE_PAAMINNELSE_REQUESTED
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_BEHOV
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_ID
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_NOTIS
@@ -26,6 +27,11 @@ interface ForespoerselService {
 
     suspend fun synkroniserForesporsler(
         vedtaksperiodeId: UUID,
+        brukernavn: String,
+    )
+
+    suspend fun overstyrPaaminnelse(
+        forespoerselId: UUID,
         brukernavn: String,
     )
 }
@@ -70,6 +76,48 @@ class ForespoerselServiceImpl(
         sendTilKafka(kafkaMessage, vedtaksperiodeId)
     }
 
+    override suspend fun overstyrPaaminnelse(
+        forespoerselId: UUID,
+        brukernavn: String,
+    ) {
+        "Overstyrer påminnelse for forespørsel: $forespoerselId. Utført av $brukernavn".also {
+            logger.info(it)
+            sikkerLogger.info(it)
+        }
+        val kontekstId = UUID.randomUUID()
+        val kafkaMessage =
+            mapOf(
+                "EVENT_NAME" to OVERSTYR_OPPGAVE_PAAMINNELSE_REQUESTED.toJson(),
+                "KONTEKST_ID" to kontekstId.toJson(),
+                "DATA" to
+                    mapOf(
+                        "FORESPOERSEL_ID" to forespoerselId.toJson(),
+                    ).toJson(),
+            )
+        sendTilRapidKafka(kafkaMessage, kontekstId)
+    }
+
+    private fun sendTilRapidKafka(
+        kafkaMessage: Map<String, JsonElement>,
+        key: UUID,
+    ) {
+        runCatching {
+            kafkaProducer.send(
+                ProducerRecord(
+                    "helsearbeidsgiver.rapid",
+                    key.toString(),
+                    kafkaMessage.toJsonStr(
+                        MapSerializer(String.serializer(), JsonElement.serializer()),
+                    ),
+                ),
+            )
+        }.onFailure { error ->
+            sikkerLogger.error("Feilet under sending til kafka", error)
+            logger.error("Feilet under sending til kafka")
+            throw error
+        }
+    }
+
     private fun sendTilKafka(
         kafkaMessage: Map<String, JsonElement>,
         key: UUID,
@@ -107,5 +155,12 @@ class MockForespoerselService : ForespoerselService {
         brukernavn: String,
     ) {
         logger.info("Synkroniserer: $vedtaksperiodeId. Utført av $brukernavn")
+    }
+
+    override suspend fun overstyrPaaminnelse(
+        forespoerselId: UUID,
+        brukernavn: String,
+    ) {
+        logger.info("Overstyrer påminnelse for forespørsel: $forespoerselId. Utført av $brukernavn")
     }
 }
