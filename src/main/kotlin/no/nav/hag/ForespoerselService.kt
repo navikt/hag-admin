@@ -87,7 +87,7 @@ class ForespoerselServiceImpl(
         val kontekstId = UUID.randomUUID()
         val kafkaMessage =
             mapOf(
-                "EVENT_NAME" to OVERSTYR_OPPGAVE_PAAMINNELSE_REQUESTED.toJson(),
+                "@event_name" to OVERSTYR_OPPGAVE_PAAMINNELSE_REQUESTED.toJson(),
                 "KONTEKST_ID" to kontekstId.toJson(),
                 "DATA" to
                     mapOf(
