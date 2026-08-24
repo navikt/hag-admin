@@ -88,10 +88,10 @@ class ForespoerselServiceImpl(
         val kafkaMessage =
             mapOf(
                 "@event_name" to OVERSTYR_OPPGAVE_PAAMINNELSE_REQUESTED.toJson(),
-                "KONTEKST_ID" to kontekstId.toJson(),
-                "DATA" to
+                "kontekst_id" to kontekstId.toJson(),
+                "data" to
                     mapOf(
-                        "FORESPOERSEL_ID" to forespoerselId.toJson(),
+                        "forespoersel_id" to forespoerselId.toJson(),
                     ).toJson(),
             )
         sendTilRapidKafka(kafkaMessage, kontekstId)
