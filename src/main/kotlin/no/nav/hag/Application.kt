@@ -14,11 +14,8 @@ import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.serialization.json.Json
-import no.nav.hag.kafkaproducer.KafkaConfig
 import no.nav.hag.plugins.configureRouting
 import no.nav.hag.plugins.configureSecurity
-import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.Altinn3Ressurs
-import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.AltinnMottaker
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
 import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.enums.Sendevindu
 import org.slf4j.LoggerFactory
@@ -60,8 +57,6 @@ fun Application.module() {
     val agNotifikasjonKlient =
         ArbeidsgiverNotifikasjonKlient(
             url = Env.agNotifikasjonUrl,
-            mottaker =
-                AltinnMottaker.Altinn3(Altinn3Ressurs.INNTEKTSMELDING),
             getAccessToken = tokenGetter,
             sendevindu = Sendevindu.NKS_AAPNINGSTID,
         )

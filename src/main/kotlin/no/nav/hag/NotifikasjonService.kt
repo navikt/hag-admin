@@ -2,6 +2,7 @@ package no.nav.hag
 
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.Paaminnelse
+import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.Tjeneste
 import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.enums.SaksStatus
 import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.hentsakmedgrupperingsid.Sak
 import no.nav.helsearbeidsgiver.utils.log.logger
@@ -50,8 +51,8 @@ class NotifikasjonServiceImpl(
         logger.info("Ferdigstiller oppgave for forespørsel: $foresporselId. Utført av $brukernavn")
         runCatching {
             klient.oppgaveUtgaattByEksternId(
+                tjeneste = Tjeneste.INNTEKTSMELDING,
                 eksternId = foresporselId,
-                merkelapp = merkelapp,
                 nyLenke = utgaattUrl,
             )
         }.onFailure { error ->
@@ -69,8 +70,8 @@ class NotifikasjonServiceImpl(
         logger.info("Lager ny påminnelse for oppgave for forespørsel: $foresporselId. Utført av $brukernavn")
         runCatching {
             klient.endreOppgavePaaminnelserByEksternId(
+                tjeneste = Tjeneste.INNTEKTSMELDING,
                 eksternId = foresporselId,
-                merkelapp = merkelapp,
                 paaminnelse =
                     Paaminnelse(
                         tittel = "Påminnelse – Vi mangler inntektsmelding for en av deres ansatte",
@@ -95,8 +96,8 @@ class NotifikasjonServiceImpl(
         logger.info("Ferdigstiller sak for forespørsel: $foresporselId. Utført av $brukernavn")
         runCatching {
             klient.nyStatusSakByGrupperingsid(
+                tjeneste = Tjeneste.INNTEKTSMELDING,
                 grupperingsid = foresporselId,
-                merkelapp = merkelapp,
                 status = SaksStatus.FERDIG,
                 nyLenke = utgaattUrl,
                 hardDeleteOm = ferdigstiltSakLevetid,
@@ -115,8 +116,8 @@ class NotifikasjonServiceImpl(
         logger.info("Sletter sak for forespørsel $foresporselId. Utført av $brukernavn")
         runCatching {
             klient.hardDeleteSakByGrupperingsid(
+                tjeneste = Tjeneste.INNTEKTSMELDING,
                 grupperingsid = foresporselId,
-                merkelapp = merkelapp,
             )
         }.onFailure { error ->
             sikkerLogger.error("Klarte ikke å slette sak", error)
@@ -126,7 +127,7 @@ class NotifikasjonServiceImpl(
     }
 
     override suspend fun hentSak(foresporselId: String): Sak {
-        val sak = klient.hentSakMedGrupperingsid(grupperingsid = foresporselId, merkelapp)
+        val sak = klient.hentSakMedGrupperingsid(grupperingsid = foresporselId, tjeneste = Tjeneste.INNTEKTSMELDING)
         sikkerLogger.info("Hentet sak: $sak")
         return sak
     }
