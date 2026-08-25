@@ -36,12 +36,14 @@ import no.nav.hag.domain.ForespoerselListe
 import no.nav.hag.domain.NotifikasjonBatcher
 import no.nav.hag.domain.Resultat
 import no.nav.hag.domain.Status
+import no.nav.helsearbeidsgiver.brreg.BrregClient
 import no.nav.helsearbeidsgiver.utils.log.logger
 
 fun Application.configureRouting(
     notifikasjonService: NotifikasjonService,
     forespoerselService: ForespoerselService,
     appMicrometerRegistry: PrometheusMeterRegistry,
+    brregClient: BrregClient,
 ) {
     routing {
         staticResources("/admin-ui", "admin-ui")
@@ -146,7 +148,7 @@ fun Application.configureRouting(
                 }
                 try {
                     val brukernavn = hentBrukernavnFraToken()
-                    val batch = NotifikasjonBatcher(notifikasjonService, brukernavn)
+                    val batch = NotifikasjonBatcher(notifikasjonService, brukernavn, brregClient)
                     val rapport = batch.ferdigstillOppgaver(foresporselIdInput)
                     logger().info(rapport.toString())
                     call.respond(HttpStatusCode.OK, rapport)
@@ -166,7 +168,7 @@ fun Application.configureRouting(
                 }
                 try {
                     val brukernavn = hentBrukernavnFraToken()
-                    val batch = NotifikasjonBatcher(notifikasjonService, brukernavn)
+                    val batch = NotifikasjonBatcher(notifikasjonService, brukernavn, brregClient)
                     val rapport = batch.nyPaaminnelse(foresporselIdInput)
                     logger().info(rapport.toString())
                     call.respond(HttpStatusCode.OK, rapport)
@@ -186,7 +188,7 @@ fun Application.configureRouting(
                 }
                 try {
                     val brukernavn = hentBrukernavnFraToken()
-                    val forespoerselBatch = NotifikasjonBatcher(notifikasjonService, brukernavn)
+                    val forespoerselBatch = NotifikasjonBatcher(notifikasjonService, brukernavn, brregClient)
                     val rapport = forespoerselBatch.ferdigstillSaker(foresporselIdInput)
                     call.respond(HttpStatusCode.OK, rapport)
                 } catch (e: IllegalArgumentException) {
@@ -205,7 +207,7 @@ fun Application.configureRouting(
                 }
                 try {
                     val brukernavn = hentBrukernavnFraToken()
-                    val forespoerselBatch = NotifikasjonBatcher(notifikasjonService, brukernavn)
+                    val forespoerselBatch = NotifikasjonBatcher(notifikasjonService, brukernavn, brregClient)
                     val rapport = forespoerselBatch.slettSaker(foresporselIdInput)
                     call.respond(HttpStatusCode.OK, rapport)
                 } catch (e: IllegalArgumentException) {

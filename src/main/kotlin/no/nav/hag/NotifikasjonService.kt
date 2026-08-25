@@ -1,5 +1,6 @@
 package no.nav.hag
 
+import no.nav.hag.domain.ForespoerselData
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.Paaminnelse
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.Tjeneste
@@ -18,7 +19,7 @@ interface NotifikasjonService {
     )
 
     suspend fun lagNyPaaminnelse(
-        foresporselId: String,
+        foresporsel: ForespoerselData,
         brukernavn: String,
     )
 
@@ -41,7 +42,6 @@ class NotifikasjonServiceImpl(
 ) : NotifikasjonService {
     private val logger = this::class.logger()
     private val sikkerLogger = sikkerLogger()
-    private val merkelapp = "Inntektsmelding sykepenger"
     private val ferdigstiltSakLevetid = 90.days // Når en sak ferdigstilles, beholdes den i oversikten i 90 dager før sletting
     private val klient = notifikasjonKlient
 
@@ -65,21 +65,18 @@ class NotifikasjonServiceImpl(
 
     // Finner fager-oppgave og setter en ny påminnelse
     override suspend fun lagNyPaaminnelse(
-        foresporselId: String,
+        foresporsel: ForespoerselData,
         brukernavn: String,
     ) {
-        logger.info("Lager ny påminnelse for oppgave for forespørsel: $foresporselId. Utført av $brukernavn")
+        logger.info("Lager ny påminnelse for oppgave for forespørsel: ${foresporsel.forespoerselId}. Utført av $brukernavn")
         runCatching {
             klient.endreOppgavePaaminnelserByEksternId(
                 tjeneste = Tjeneste.INNTEKTSMELDING,
-                eksternId = foresporselId,
+                eksternId = foresporsel.forespoerselId,
                 paaminnelse =
                     Paaminnelse(
                         tittel = "Påminnelse – Vi mangler inntektsmelding for en av deres ansatte",
-                        // bør muligens ta med orgnr i innhold...?
-                        innhold =
-                            "Nav har ennå ikke mottatt inntektsmeldingen for en av deres ansatte. " +
-                                "For at vi skal kunne behandle søknaden om sykepenger, må inntektsmeldingen sendes inn så snart som mulig.",
+                        innhold = paaminnelseInnhold(foresporsel.orgnr, foresporsel.navn),
                         eksaktTid = LocalDateTime.now().plusMinutes(5),
                         tidMellomOppgaveopprettelseOgPaaminnelse = "PT1M", // 265H-13M-39
                     ),
@@ -133,6 +130,17 @@ class NotifikasjonServiceImpl(
         sikkerLogger.info("Hentet sak: $sak")
         return sak
     }
+
+    private fun paaminnelseInnhold(
+        orgnr: String,
+        orgNavn: String,
+    ): String =
+        listOf(
+            "Nav har ennå ikke mottatt inntektsmeldingen for en av deres ansatte.",
+            "For at vi skal kunne behandle søknaden om sykepenger, må inntektsmeldingen sendes inn så snart som mulig.",
+            "Vennligst logg inn på Min side – arbeidsgiver hos Nav for å se hvilken inntektsmelding det gjelder.",
+            "Arbeidsgiver: $orgNavn (orgnr $orgnr).",
+        ).joinToString(separator = " ")
 }
 
 class FakeServiceImpl : NotifikasjonService {
@@ -146,10 +154,10 @@ class FakeServiceImpl : NotifikasjonService {
     }
 
     override suspend fun lagNyPaaminnelse(
-        foresporselId: String,
+        foresporsel: ForespoerselData,
         brukernavn: String,
     ) {
-        logger.info("Bruker: $brukernavn lagde ny påminnelse for forespørselId: $foresporselId")
+        logger.info("Bruker: $brukernavn lagde ny påminnelse: $foresporsel")
     }
 
     override suspend fun ferdigstillSak(

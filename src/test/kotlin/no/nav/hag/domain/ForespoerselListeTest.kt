@@ -105,4 +105,20 @@ class ForespoerselListeTest {
 
         assertEquals(expected, forespoerselListe.konverterInput())
     }
+
+    @Test
+    fun `skal parse notifikasjonInput med UUID og Orgnr`() {
+        val uuid1 = UUID.randomUUID().toString()
+        val uuid2 = UUID.randomUUID().toString()
+        val input = uuid1 + ",987654321" + standardLinjeskift + uuid2 + ",123456789"
+        val data = ForespoerselListe(input).konverterTilNotifikasjonData()
+
+        val expected =
+            mapOf(
+                uuid1 to "987654321",
+                uuid2 to "123456789",
+            )
+
+        assertEquals(expected, data)
+    }
 }
