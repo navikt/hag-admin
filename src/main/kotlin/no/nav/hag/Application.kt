@@ -14,6 +14,7 @@ import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.serialization.json.Json
+import no.nav.hag.kafkaproducer.KafkaConfig
 import no.nav.hag.plugins.configureRouting
 import no.nav.hag.plugins.configureSecurity
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
@@ -64,7 +65,7 @@ fun Application.module() {
             sendevindu = Sendevindu.NKS_AAPNINGSTID,
         )
 
-    val forespoerselService = MockForespoerselService()
+    val forespoerselService = ForespoerselServiceImpl(KafkaConfig.getKafkaProducer())
 
     val notifikasjonService =
         when {
