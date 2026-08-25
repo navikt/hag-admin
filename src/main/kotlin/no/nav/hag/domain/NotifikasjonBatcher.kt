@@ -11,7 +11,6 @@ enum class Status {
     OK,
     UGYLDIG,
     FEILET,
-    AVBRUTT,
 }
 
 enum class Operasjon {
@@ -67,8 +66,9 @@ class NotifikasjonBatcher(
     private suspend fun oppdaterNotifikasjoner(batch: String): List<Resultat> {
         val liste = ForespoerselListe(batch).konverterTilNotifikasjonData()
         if (liste.size > 100) { // kan evt øke size-param i brreg-klienten
-            logger().warn("Godtar ikke flere enn 100 linjer pga brreg-paginering")
-            return liste.map { Resultat(it.key, Status.AVBRUTT) }
+            val feilmelding = "Godtar ikke flere enn 100 linjer pga brreg-paginering"
+            logger().warn(feilmelding)
+            throw IllegalArgumentException(feilmelding)
         }
         val orgnumre =
             brregClient
