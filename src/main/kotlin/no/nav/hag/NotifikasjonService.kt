@@ -78,7 +78,7 @@ class NotifikasjonServiceImpl(
                         tittel = "Påminnelse – Vi mangler inntektsmelding for en av deres ansatte",
                         innhold = paaminnelseInnhold(foresporsel.orgnr, foresporsel.navn),
                         eksaktTid = LocalDateTime.now().plusMinutes(5),
-                        tidMellomOppgaveopprettelseOgPaaminnelse = "PT1M", // 265H-13M-39
+                        tidMellomOppgaveopprettelseOgPaaminnelse = "", // Må settes, men brukes ikke når vi bruker eksaktTid
                     ),
             )
         }.onFailure { error ->
