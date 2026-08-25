@@ -75,7 +75,7 @@ class NotifikasjonServiceImpl(
                 eksternId = foresporsel.forespoerselId,
                 paaminnelse =
                     Paaminnelse(
-                        tittel = "Påminnelse – Vi mangler inntektsmelding for en av deres ansatte",
+                        tittel = "Påminnelse – Nav mangler inntektsmelding",
                         innhold = paaminnelseInnhold(foresporsel.orgnr, foresporsel.navn),
                         eksaktTid = LocalDateTime.now().plusMinutes(5),
                         tidMellomOppgaveopprettelseOgPaaminnelse = "", // Må settes, men brukes ikke når vi bruker eksaktTid
@@ -136,8 +136,8 @@ class NotifikasjonServiceImpl(
         orgNavn: String,
     ): String =
         listOf(
-            "Nav har ennå ikke mottatt inntektsmeldingen for en av deres ansatte.",
-            "For at vi skal kunne behandle søknaden om sykepenger, må inntektsmeldingen sendes inn så snart som mulig.",
+            "Nav har ennå ikke mottatt inntektsmelding.",
+            "Du mottar dette varselet fordi det har gått mer enn to måneder siden vi ba om inntektsmelding for et sykefravær.",
             "Vennligst logg inn på Min side – arbeidsgiver hos Nav for å se hvilken inntektsmelding det gjelder.",
             "Arbeidsgiver: $orgNavn (orgnr $orgnr).",
         ).joinToString(separator = " ")
