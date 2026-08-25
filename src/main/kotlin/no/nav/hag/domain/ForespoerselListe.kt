@@ -19,6 +19,17 @@ class ForespoerselListe(
             .associateWith { parseUUID(it) }
     }
 
+    fun konverterTilNotifikasjonData(): Map<String, String> {
+        if (liste.isBlank()) return emptyMap()
+        return liste
+            .lines()
+            .map {
+                it.trim()
+            }.filter { it.isNotBlank() }
+            .map { it.split(",") }
+            .associate { Pair(it[0], it[1]) }
+    }
+
     private fun parseUUID(element: String): UUID? {
         try {
             return UUID.fromString(element)

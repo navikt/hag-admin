@@ -2,6 +2,9 @@ package no.nav.hag.domain
 
 import kotlinx.serialization.Serializable
 import no.nav.hag.NotifikasjonService
+import no.nav.helsearbeidsgiver.brreg.BrregClient
+import no.nav.helsearbeidsgiver.utils.collection.mapValuesNotNull
+import no.nav.helsearbeidsgiver.utils.log.logger
 
 @Serializable
 enum class Status {
@@ -25,10 +28,13 @@ data class Resultat(
 class NotifikasjonBatcher(
     val notifikasjonService: NotifikasjonService,
     val brukernavn: String,
+    val brregClient: BrregClient,
 ) {
     suspend fun slettSaker(batch: String): List<Resultat> = utfoerBatchOperasjon(Operasjon.SLETT, batch)
 
     suspend fun ferdigstillOppgaver(batch: String): List<Resultat> = utfoerBatchOperasjon(Operasjon.FERDIGSTILL_OPPGAVE, batch)
+
+    suspend fun nyPaaminnelse(batch: String): List<Resultat> = oppdaterNotifikasjoner(batch)
 
     suspend fun ferdigstillSaker(batch: String): List<Resultat> = utfoerBatchOperasjon(Operasjon.FERDIGSTILL_SAK, batch)
 
@@ -56,4 +62,38 @@ class NotifikasjonBatcher(
             }
         return resultat
     }
+
+    private suspend fun oppdaterNotifikasjoner(batch: String): List<Resultat> {
+        val liste = ForespoerselListe(batch).konverterTilNotifikasjonData()
+        if (liste.size > 100) { // kan evt øke size-param i brreg-klienten
+            val feilmelding = "Godtar ikke flere enn 100 linjer pga brreg-paginering"
+            logger().warn(feilmelding)
+            throw IllegalArgumentException(feilmelding)
+        }
+        val orgnumre =
+            brregClient
+                .hentOrganisasjonNavn(liste.mapValuesNotNull { it }.values.toSet())
+                .map {
+                    it.key.verdi to it.value
+                }.toMap()
+        val alleData = slaaSammen(liste, orgnumre)
+        val resultat =
+            alleData.map {
+                try {
+                    notifikasjonService.lagNyPaaminnelse(it, brukernavn)
+                    Resultat(it.forespoerselId, Status.OK)
+                } catch (e: Exception) {
+                    Resultat(it.forespoerselId, Status.FEILET)
+                }
+            }
+        return resultat
+    }
+
+    private fun slaaSammen(
+        liste: Map<String, String>, // ForespørselId, Orgnr som String
+        orgnumre: Map<String, String>, // Orgnr, Navn
+    ): List<ForespoerselData> =
+        liste.map {
+            ForespoerselData(it.key, it.value, orgnumre[it.value] ?: "")
+        }
 }

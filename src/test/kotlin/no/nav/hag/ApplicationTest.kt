@@ -14,12 +14,13 @@ import io.mockk.mockk
 import no.nav.hag.plugins.GROUP_ID_HAG
 import no.nav.hag.plugins.configureRouting
 import no.nav.hag.plugins.configureSecurity
-import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.Altinn3Ressurs
-import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.AltinnMottaker
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
 import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.enums.Sendevindu
+import no.nav.helsearbeidsgiver.brreg.BrregClient
+import no.nav.helsearbeidsgiver.utils.cache.LocalCache
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.days
 
 class ApplicationTest {
     @Test
@@ -36,10 +37,14 @@ class ApplicationTest {
                     .sign(Algorithm.HMAC256("super secret"))
 
             coEvery { authClient.introspect(mockToken) } returns true
-
+            val brregClient =
+                BrregClient(
+                    "https://data.brreg.no/enhetsregisteret/api/underenheter",
+                    cacheConfig = LocalCache.Config(7.days, 10_000),
+                )
             application {
                 configureSecurity(authClient, disabled = false)
-                configureRouting(FakeServiceImpl(), MockForespoerselService(), appMicrometerRegistry)
+                configureRouting(FakeServiceImpl(), MockForespoerselService(), appMicrometerRegistry, brregClient)
             }
 
             client
@@ -63,7 +68,6 @@ class ApplicationTest {
         val arbeidsgiverNotifikasjonKlient =
             ArbeidsgiverNotifikasjonKlient(
                 url = url,
-                mottaker = AltinnMottaker.Altinn3(Altinn3Ressurs.INNTEKTSMELDING),
                 getAccessToken = { token },
                 sendevindu = Sendevindu.NKS_AAPNINGSTID,
             )

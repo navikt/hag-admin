@@ -6,6 +6,9 @@ val kafka_client_version: String by project
 val logback_version: String by project
 val mockk_version: String by project
 val arbeidsgiver_notifikasjon_klient_version: String by project
+val brregKlientVersion: String by project
+val utilsVersion: String by project
+
 
 plugins {
     application
@@ -67,11 +70,12 @@ dependencies {
     implementation("io.ktor:ktor-server-metrics-micrometer:$ktor_version")
     implementation("io.micrometer:micrometer-registry-prometheus:1.10.3")
     implementation("no.nav.helsearbeidsgiver:arbeidsgiver-notifikasjon-klient:$arbeidsgiver_notifikasjon_klient_version")
-    implementation("no.nav.helsearbeidsgiver:utils:0.10.1")
+    implementation("no.nav.helsearbeidsgiver:brreg-client:$brregKlientVersion")
+    implementation("no.nav.helsearbeidsgiver:utils:$utilsVersion")
     implementation("org.jetbrains.kotlin-wrappers:kotlin-css:1.0.0-pre.817")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     implementation("org.apache.kafka:kafka-clients:$kafka_client_version")
-
+    testImplementation(testFixtures("no.nav.helsearbeidsgiver:utils:$utilsVersion"))
     testImplementation("io.ktor:ktor-client-core:$ktor_version")
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")

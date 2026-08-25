@@ -17,11 +17,12 @@ import kotlinx.serialization.json.Json
 import no.nav.hag.kafkaproducer.KafkaConfig
 import no.nav.hag.plugins.configureRouting
 import no.nav.hag.plugins.configureSecurity
-import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.Altinn3Ressurs
-import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.AltinnMottaker
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient
 import no.nav.helsearbeidsgiver.arbeidsgivernotifkasjon.graphql.generated.enums.Sendevindu
+import no.nav.helsearbeidsgiver.brreg.BrregClient
+import no.nav.helsearbeidsgiver.utils.cache.LocalCache
 import org.slf4j.LoggerFactory
+import kotlin.time.Duration.Companion.days
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
@@ -60,8 +61,6 @@ fun Application.module() {
     val agNotifikasjonKlient =
         ArbeidsgiverNotifikasjonKlient(
             url = Env.agNotifikasjonUrl,
-            mottaker =
-                AltinnMottaker.Altinn3(Altinn3Ressurs.INNTEKTSMELDING),
             getAccessToken = tokenGetter,
             sendevindu = Sendevindu.NKS_AAPNINGSTID,
         )
@@ -73,5 +72,11 @@ fun Application.module() {
             Env.isLocal() -> FakeServiceImpl()
             else -> NotifikasjonServiceImpl(agNotifikasjonKlient, Env.utgaattUrl)
         }
-    configureRouting(notifikasjonService, forespoerselService, appMicrometerRegistry)
+
+    val brregClient =
+        BrregClient(
+            "https://data.brreg.no/enhetsregisteret/api/underenheter",
+            cacheConfig = LocalCache.Config(7.days, 10_000),
+        )
+    configureRouting(notifikasjonService, forespoerselService, appMicrometerRegistry, brregClient)
 }

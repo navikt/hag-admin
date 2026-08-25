@@ -21,6 +21,8 @@ spec:
     {{/if}}
   accessPolicy:
     outbound:
+      external:
+        - host: data.brreg.no
       rules:
         - application: notifikasjon-produsent-api
           namespace: fager
