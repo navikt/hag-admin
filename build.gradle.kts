@@ -37,7 +37,7 @@ configurations.all {
 }
 
 repositories {
-    val githubPassword: String by project
+    val githubPassword = project.property("githubPassword") as String
     mavenCentral()
     maven {
         setUrl("https://maven.pkg.github.com/navikt/*")
