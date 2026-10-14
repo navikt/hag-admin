@@ -4,14 +4,13 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
 import no.nav.hag.kafkaconsumer.PriTopicResponses
-import no.nav.hag.kafkaproducer.KafkaConfig
 import no.nav.hag.kafkaproducer.KafkaConfig.FNR
 import no.nav.hag.kafkaproducer.KafkaConfig.FORESPOERSEL_MANUELT_FORKASTET
 import no.nav.hag.kafkaproducer.KafkaConfig.HENT_FORESPOERSLER_FOR_PERSON
 import no.nav.hag.kafkaproducer.KafkaConfig.HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_BEHOV
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_ID
-import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_SVAR_ID
+import no.nav.hag.kafkaproducer.KafkaConfig.CORRELATION_ID
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_NOTIS
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_VEDTAKSPERIODE_ID
 import no.nav.helsearbeidsgiver.utils.json.toJson
@@ -84,7 +83,7 @@ class ForespoerselServiceImpl(
             mapOf(
                 PRI_FELT_NAVN_BEHOV to HENT_FORESPOERSLER_FOR_PERSON.toJson(),
                 FNR to fnr.toJson(),
-                PRI_FELT_NAVN_FORESPOERSEL_SVAR_ID to correlationId.toString().toJson(),
+                CORRELATION_ID to correlationId.toString().toJson(),
             )
         return priTopicResponses.request(correlationId) {
             sendTilKafka(kafkaMessage, correlationId)

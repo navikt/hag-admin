@@ -57,7 +57,7 @@ class PriTopicResponses {
         val correlationId =
             try {
                 UUID.fromString(
-                    (json[KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_SVAR_ID] as? JsonPrimitive)
+                    (json[KafkaConfig.CORRELATION_ID] as? JsonPrimitive)
                         ?.contentOrNull
                         ?: throw IllegalArgumentException("Mangler korrelasjons-ID"),
                 )
