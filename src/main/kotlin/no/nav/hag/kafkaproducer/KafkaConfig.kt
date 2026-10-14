@@ -18,10 +18,15 @@ object KafkaConfig {
 
     const val PRI_FELT_NAVN_NOTIS = "notis"
     const val PRI_FELT_NAVN_BEHOV = "@behov"
+    const val PRI_FELT_NAVN_FORESPOERSEL_LISTE = "forespoersel_liste"
     const val PRI_FELT_NAVN_FORESPOERSEL_ID = "forespoerselId"
+    const val PRI_FELT_NAVN_FORESPOERSEL_SVAR_ID = "forespoerselSvarId"
     const val PRI_FELT_NAVN_VEDTAKSPERIODE_ID = "vedtaksperiode_id"
     const val FORESPOERSEL_MANUELT_FORKASTET = "FORESPOERSEL_MANUELT_FORKASTET"
     const val HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID = "HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID"
+    const val HENT_FORESPOERSLER_FOR_PERSON = "HENT_FORESPOERSLER_FOR_PERSON"
+    const val PRI_NOTIS_FORESPOERSEL_LISTE_FOR_PERSON = "FORESPOERSEL_LISTE_FOR_PERSON"
+    const val FNR = "fnr"
 
     private fun createProducer(): KafkaProducer<String, String> =
         KafkaProducer(

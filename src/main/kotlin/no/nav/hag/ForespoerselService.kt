@@ -3,10 +3,15 @@ package no.nav.hag
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
+import no.nav.hag.kafkaconsumer.PriTopicResponses
+import no.nav.hag.kafkaproducer.KafkaConfig
+import no.nav.hag.kafkaproducer.KafkaConfig.FNR
 import no.nav.hag.kafkaproducer.KafkaConfig.FORESPOERSEL_MANUELT_FORKASTET
+import no.nav.hag.kafkaproducer.KafkaConfig.HENT_FORESPOERSLER_FOR_PERSON
 import no.nav.hag.kafkaproducer.KafkaConfig.HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_BEHOV
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_ID
+import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_SVAR_ID
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_NOTIS
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_VEDTAKSPERIODE_ID
 import no.nav.helsearbeidsgiver.utils.json.toJson
@@ -28,10 +33,13 @@ interface ForespoerselService {
         vedtaksperiodeId: UUID,
         brukernavn: String,
     )
+
+    suspend fun hentEksponerteForespoersler(fnr: String): List<UUID>
 }
 
 class ForespoerselServiceImpl(
     kafkaProducer: KafkaProducer<String, String>,
+    private val priTopicResponses: PriTopicResponses,
 ) : ForespoerselService {
     private val logger = this::class.logger()
     private val sikkerLogger = sikkerLogger()
@@ -70,20 +78,34 @@ class ForespoerselServiceImpl(
         sendTilKafka(kafkaMessage, vedtaksperiodeId)
     }
 
+    override suspend fun hentEksponerteForespoersler(fnr: String): List<UUID> {
+        val correlationId = UUID.randomUUID()
+        val kafkaMessage =
+            mapOf(
+                PRI_FELT_NAVN_BEHOV to HENT_FORESPOERSLER_FOR_PERSON.toJson(),
+                FNR to fnr.toJson(),
+                PRI_FELT_NAVN_FORESPOERSEL_SVAR_ID to correlationId.toString().toJson(),
+            )
+        return priTopicResponses.request(correlationId) {
+            sendTilKafka(kafkaMessage, correlationId)
+        }
+    }
+
     private fun sendTilKafka(
         kafkaMessage: Map<String, JsonElement>,
         key: UUID,
     ) {
         runCatching {
-            kafkaProducer.send(
-                ProducerRecord(
-                    topic,
-                    key.toString(),
-                    kafkaMessage.toJsonStr(
-                        MapSerializer(String.serializer(), JsonElement.serializer()),
+            kafkaProducer
+                .send(
+                    ProducerRecord(
+                        topic,
+                        key.toString(),
+                        kafkaMessage.toJsonStr(
+                            MapSerializer(String.serializer(), JsonElement.serializer()),
+                        ),
                     ),
-                ),
-            )
+                ).get()
         }.onFailure { error ->
             sikkerLogger.error("Feilet under sending til kafka", error)
             logger.error("Feilet under sending til kafka")
@@ -108,4 +130,6 @@ class MockForespoerselService : ForespoerselService {
     ) {
         logger.info("Synkroniserer: $vedtaksperiodeId. Utført av $brukernavn")
     }
+
+    override suspend fun hentEksponerteForespoersler(fnr: String): List<UUID> = emptyList()
 }

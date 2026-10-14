@@ -7,7 +7,9 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.auth.authenticate
 import io.ktor.server.html.respondHtml
 import io.ktor.server.http.content.staticResources
+import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.request.authorization
+import io.ktor.server.request.receive
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -29,6 +31,7 @@ import kotlinx.html.h2
 import kotlinx.html.head
 import kotlinx.html.link
 import kotlinx.html.p
+import kotlinx.serialization.Serializable
 import no.nav.hag.Env
 import no.nav.hag.ForespoerselService
 import no.nav.hag.NotifikasjonService
@@ -36,8 +39,10 @@ import no.nav.hag.domain.ForespoerselListe
 import no.nav.hag.domain.NotifikasjonBatcher
 import no.nav.hag.domain.Resultat
 import no.nav.hag.domain.Status
+import no.nav.hag.kafkaconsumer.PriResponseTimeoutException
 import no.nav.helsearbeidsgiver.brreg.BrregClient
 import no.nav.helsearbeidsgiver.utils.log.logger
+import java.util.UUID
 
 fun Application.configureRouting(
     notifikasjonService: NotifikasjonService,
@@ -280,9 +285,35 @@ fun Application.configureRouting(
                     call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
                 }
             }
+            post("/hentEksponerteForespoersler") {
+                val request =
+                    try {
+                        call.receive<HentEksponerteForespoerslerRequest>()
+                    } catch (e: BadRequestException) {
+                        call.respond(HttpStatusCode.BadRequest, "Ugyldig JSON-body")
+                        return@post
+                    }
+                if (request.fnr.isBlank()) {
+                    call.respond(HttpStatusCode.BadRequest, "fnr må være utfylt")
+                    return@post
+                }
+                try {
+                    val forespoerselIder = forespoerselService.hentEksponerteForespoersler(request.fnr)
+                    call.respond(HttpStatusCode.OK, forespoerselIder.map(UUID::toString))
+                } catch (e: PriResponseTimeoutException) {
+                    call.respond(HttpStatusCode.GatewayTimeout, e.message.orEmpty())
+                } catch (ex: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
+                }
+            }
         }
     }
 }
+
+@Serializable
+internal data class HentEksponerteForespoerslerRequest(
+    val fnr: String,
+)
 
 private fun RoutingContext.hentBrukernavnFraToken(): String =
     call.request
