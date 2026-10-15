@@ -17,15 +17,15 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class PriTopicResponses {
     private val logger = this::class.logger()
-    private val pending = ConcurrentHashMap<UUID, CompletableDeferred<List<UUID>>>()
+    private val pending = ConcurrentHashMap<String, CompletableDeferred<List<UUID>>>()
 
     suspend fun request(
-        correlationId: UUID,
+        fnr: String,
         sendRequest: () -> Unit,
     ): List<UUID> {
         val response = CompletableDeferred<List<UUID>>()
-        check(pending.putIfAbsent(correlationId, response) == null) {
-            "Det finnes allerede en PRI-forespørsel med samme korrelasjons-ID."
+        check(pending.putIfAbsent(fnr, response) == null) {
+            "Det finnes allerede en ventende PRI-forespørsel for samme person."
         }
 
         try {
@@ -34,7 +34,7 @@ class PriTopicResponses {
         } catch (e: TimeoutCancellationException) {
             throw PriResponseTimeoutException()
         } finally {
-            pending.remove(correlationId, response)
+            pending.remove(fnr, response)
         }
     }
 
@@ -54,19 +54,13 @@ class PriTopicResponses {
             return
         }
 
-        val correlationId =
-            try {
-                UUID.fromString(
-                    (json[KafkaConfig.CORRELATION_ID] as? JsonPrimitive)
-                        ?.contentOrNull
-                        ?: throw IllegalArgumentException("Mangler korrelasjons-ID"),
-                )
-            } catch (e: IllegalArgumentException) {
-                logger.warn("PRI-svar mangler en gyldig korrelasjons-ID")
-                return
-            }
+        val fnr = (json[KafkaConfig.FNR] as? JsonPrimitive)?.contentOrNull
+        if (fnr.isNullOrBlank()) {
+            logger.warn("PRI-svar mangler fnr")
+            return
+        }
 
-        val response = pending[correlationId] ?: return
+        val response = pending[fnr] ?: return
         val forespoerselIder =
             try {
                 (json[KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_LISTE] as? JsonArray)

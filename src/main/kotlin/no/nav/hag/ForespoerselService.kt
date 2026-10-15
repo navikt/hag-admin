@@ -4,7 +4,6 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
 import no.nav.hag.kafkaconsumer.PriTopicResponses
-import no.nav.hag.kafkaproducer.KafkaConfig.CORRELATION_ID
 import no.nav.hag.kafkaproducer.KafkaConfig.FNR
 import no.nav.hag.kafkaproducer.KafkaConfig.FORESPOERSEL_MANUELT_FORKASTET
 import no.nav.hag.kafkaproducer.KafkaConfig.HENT_FORESPOERSLER_FOR_PERSON
@@ -13,6 +12,7 @@ import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_BEHOV
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_ID
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_NOTIS
 import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_VEDTAKSPERIODE_ID
+import no.nav.hag.kafkaproducer.KafkaConfig.PRI_TOPIC
 import no.nav.helsearbeidsgiver.utils.json.toJson
 import no.nav.helsearbeidsgiver.utils.json.toJsonStr
 import no.nav.helsearbeidsgiver.utils.log.logger
@@ -43,7 +43,6 @@ class ForespoerselServiceImpl(
     private val logger = this::class.logger()
     private val sikkerLogger = sikkerLogger()
     private val kafkaProducer = kafkaProducer
-    private val topic = "helsearbeidsgiver.pri"
 
     override suspend fun forkastForespoersel(
         foresporselId: UUID,
@@ -78,28 +77,31 @@ class ForespoerselServiceImpl(
     }
 
     override suspend fun hentEksponerteForespoersler(fnr: String): List<UUID> {
-        val correlationId = UUID.randomUUID()
         val kafkaMessage =
             mapOf(
                 PRI_FELT_NAVN_BEHOV to HENT_FORESPOERSLER_FOR_PERSON.toJson(),
                 FNR to fnr.toJson(),
-                CORRELATION_ID to correlationId.toString().toJson(),
             )
-        return priTopicResponses.request(correlationId) {
-            sendTilKafka(kafkaMessage, correlationId)
+        return priTopicResponses.request(fnr) {
+            sendTilKafka(kafkaMessage, fnr)
         }
     }
 
     private fun sendTilKafka(
         kafkaMessage: Map<String, JsonElement>,
         key: UUID,
+    ) = sendTilKafka(kafkaMessage, key.toString())
+
+    private fun sendTilKafka(
+        kafkaMessage: Map<String, JsonElement>,
+        key: String,
     ) {
         runCatching {
             kafkaProducer
                 .send(
                     ProducerRecord(
-                        topic,
-                        key.toString(),
+                        PRI_TOPIC,
+                        key,
                         kafkaMessage.toJsonStr(
                             MapSerializer(String.serializer(), JsonElement.serializer()),
                         ),
