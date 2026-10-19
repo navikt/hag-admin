@@ -58,20 +58,20 @@ export function App() {
           }}
         />
         <Button type="submit" loading={loading} disabled={loading}>
-          Hent forespørsler
+          Hent eksponerte forespørselid-er
         </Button>
       </form>
       <div aria-live="polite" aria-busy={loading}>
-        {loading && <BodyShort>Henter forespørsler …</BodyShort>}
+        {loading && <BodyShort>Henter eksponerte forespørselid-er …</BodyShort>}
         {error && <Alert variant="error" role="alert">{error}</Alert>}
         {result && (
           <section aria-labelledby="result-heading">
             <Heading level="2" size="medium" id="result-heading">Resultat</Heading>
             {result.length === 0 ? (
-              <BodyShort>Ingen eksponerte forespørsler funnet.</BodyShort>
+              <BodyShort>Ingen eksponerte forespørselid-er funnet.</BodyShort>
             ) : (
               <>
-                <BodyShort>Antall forespørsler: {result.length}</BodyShort>
+                <BodyShort>Antall eksponerte forespørselid-er: {result.length}</BodyShort>
                 <ul>{result.map((id) => <li key={id}><code>{id}</code></li>)}</ul>
               </>
             )}
