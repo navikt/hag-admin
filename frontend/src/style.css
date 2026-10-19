@@ -1,0 +1,21 @@
+body {
+  margin: 0;
+}
+
+.lookup {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.lookup form {
+  display: grid;
+  justify-items: start;
+  gap: 1.5rem;
+}
+
+.lookup code {
+  overflow-wrap: anywhere;
+}

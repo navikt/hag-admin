@@ -68,6 +68,7 @@ fun Application.configureRouting(
             call.respond(appMicrometerRegistry.scrape())
         }
         authenticate {
+            staticResources("/forespoersler", "frontend")
             get("/") {
                 val brukernavn = hentBrukernavnFraToken()
                 call.respondHtml(HttpStatusCode.OK) {
@@ -82,6 +83,11 @@ fun Application.configureRouting(
                             text(
                                 "Logget inn som: $brukernavn",
                             )
+                        }
+                        p {
+                            a(href = "/forespoersler/") {
+                                +"Hent eksponerte forespørsler"
+                            }
                         }
                         p {
                             a(href = "admin-ui/finnSak-form.html") {

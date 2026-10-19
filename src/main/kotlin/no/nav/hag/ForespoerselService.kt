@@ -132,5 +132,5 @@ class MockForespoerselService : ForespoerselService {
         logger.info("Synkroniserer: $vedtaksperiodeId. Utført av $brukernavn")
     }
 
-    override suspend fun hentEksponerteForespoersler(fnr: String): List<UUID> = emptyList()
+    override suspend fun hentEksponerteForespoersler(fnr: String): List<UUID> = List(3) { UUID.randomUUID() }
 }

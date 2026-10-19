@@ -69,7 +69,11 @@ fun Application.module() {
         )
 
     val priTopicResponses = PriTopicResponses()
-    val forespoerselService = ForespoerselServiceImpl(KafkaConfig.getKafkaProducer(), priTopicResponses)
+    val forespoerselService =
+        when {
+            Env.isLocal() -> MockForespoerselService()
+            else -> ForespoerselServiceImpl(KafkaConfig.getKafkaProducer(), priTopicResponses)
+        }
 
     val notifikasjonService =
         when {
@@ -84,9 +88,11 @@ fun Application.module() {
         )
     configureRouting(notifikasjonService, forespoerselService, appMicrometerRegistry, brregClient)
 
-    val priTopicConsumer = PriTopicConsumer(priTopicResponses)
-    priTopicConsumer.start()
-    monitor.subscribe(ApplicationStopped) {
-        priTopicConsumer.stop()
+    if (!Env.isLocal()) {
+        val priTopicConsumer = PriTopicConsumer(priTopicResponses)
+        priTopicConsumer.start()
+        monitor.subscribe(ApplicationStopped) {
+            priTopicConsumer.stop()
+        }
     }
 }

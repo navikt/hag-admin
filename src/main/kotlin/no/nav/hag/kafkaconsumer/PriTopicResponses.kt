@@ -11,12 +11,14 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import no.nav.hag.kafkaproducer.KafkaConfig
 import no.nav.helsearbeidsgiver.utils.log.logger
+import no.nav.helsearbeidsgiver.utils.log.sikkerLogger
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
 class PriTopicResponses {
     private val logger = this::class.logger()
+    private val sikkerLogger = sikkerLogger()
     private val pending = ConcurrentHashMap<String, CompletableDeferred<List<UUID>>>()
 
     suspend fun request(
@@ -25,7 +27,7 @@ class PriTopicResponses {
     ): List<UUID> {
         val response = CompletableDeferred<List<UUID>>()
         check(pending.putIfAbsent(fnr, response) == null) {
-            "Det finnes allerede en ventende PRI-forespørsel for samme person."
+            "HentFSPforPerson: Det finnes allerede en ventende request for samme person."
         }
 
         try {
@@ -44,7 +46,8 @@ class PriTopicResponses {
                 Json.parseToJsonElement(message) as? JsonObject
                     ?: throw SerializationException("PRI-melding er ikke et JSON-objekt")
             } catch (e: SerializationException) {
-                logger.warn("Ugyldig JSON-melding mottatt på PRI-topic")
+                logger.warn("HentFSPforPerson: Ugyldig JSON-melding mottatt på PRI-topic")
+                sikkerLogger.warn("HentFSPforPerson: Ugyldig JSON-melding mottatt på PRI-topic", e)
                 return
             }
 
@@ -56,7 +59,7 @@ class PriTopicResponses {
 
         val fnr = (json[KafkaConfig.FNR] as? JsonPrimitive)?.contentOrNull
         if (fnr.isNullOrBlank()) {
-            logger.warn("PRI-svar mangler fnr")
+            logger.warn("HentFSPforPerson: svar mangler fnr")
             return
         }
 
@@ -77,11 +80,13 @@ class PriTopicResponses {
                     ?: throw SerializationException("Mangler forespoersel_liste")
             } catch (e: SerializationException) {
                 response.completeExceptionally(e)
-                logger.warn("PRI-svar har ugyldig format")
+                logger.warn("HentFSPforPerson: svar har ugyldig format")
+                sikkerLogger.warn("HentFSPforPerson: svar har ugyldig format", e)
                 return
             } catch (e: IllegalArgumentException) {
                 response.completeExceptionally(e)
-                logger.warn("PRI-svar inneholder en ugyldig forespoerselId")
+                logger.warn("HentFSPforPerson: svar inneholder en ugyldig forespoerselId")
+                sikkerLogger.warn("HentFSPforPerson: svar inneholder en ugyldig forespoerselId", e)
                 return
             }
 
