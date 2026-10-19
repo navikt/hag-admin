@@ -11,7 +11,7 @@ afterEach(() => vi.unstubAllGlobals());
 async function submitLookup() {
   const user = userEvent.setup();
   await user.type(screen.getByLabelText("Fødselsnummer"), fnr);
-  await user.click(screen.getByRole("button", { name: "Hent forespørsler" }));
+  await user.click(screen.getByRole("button", { name: "Hent eksponerte forespørselid-er" }));
   return user;
 }
 
@@ -39,7 +39,7 @@ describe("Forespørselsoppslag", () => {
     render(<App />);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("Fødselsnummer"), "123");
-    await user.click(screen.getByRole("button", { name: "Hent forespørsler" }));
+    await user.click(screen.getByRole("button", { name: "Hent eksponerte forespørselid-er" }));
 
     expect(screen.getByText("Skriv inn et fødselsnummer med 11 sifre.")).toBeVisible();
     expect(fetchMock).not.toHaveBeenCalled();
@@ -49,7 +49,7 @@ describe("Forespørselsoppslag", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("[]")));
     render(<App />);
     await submitLookup();
-    expect(await screen.findByText("Ingen eksponerte forespørsler funnet.")).toBeVisible();
+    expect(await screen.findByText("Ingen eksponerte forespørselid-er funnet.")).toBeVisible();
   });
 
   it("disables duplicate submissions while awaiting the response", async () => {
@@ -64,7 +64,7 @@ describe("Forespørselsoppslag", () => {
     await user.click(button);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     complete(new Response("[]"));
-    expect(await screen.findByText("Ingen eksponerte forespørsler funnet.")).toBeVisible();
+    expect(await screen.findByText("Ingen eksponerte forespørselid-er funnet.")).toBeVisible();
   });
 
   it("clears previous results when the person changes", async () => {
@@ -101,6 +101,6 @@ describe("Forespørselsoppslag", () => {
     render(<App />);
     await submitLookup();
     expect(await screen.findByRole("alert")).toHaveTextContent("Kontroller forbindelsen");
-    await waitFor(() => expect(screen.getByRole("button", { name: "Hent forespørsler" })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Hent eksponerte forespørselid-er" })).toBeEnabled());
   });
 });
