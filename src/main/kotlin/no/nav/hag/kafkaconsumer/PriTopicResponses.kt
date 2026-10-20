@@ -19,13 +19,13 @@ import kotlin.time.Duration.Companion.milliseconds
 class PriTopicResponses {
     private val logger = this::class.logger()
     private val sikkerLogger = sikkerLogger()
-    private val pending = ConcurrentHashMap<String, CompletableDeferred<List<UUID>>>()
+    private val pending = ConcurrentHashMap<String, CompletableDeferred<List<JsonObject>>>()
 
     suspend fun request(
         fnr: String,
         sendRequest: () -> Unit,
-    ): List<UUID> {
-        val response = CompletableDeferred<List<UUID>>()
+    ): List<JsonObject> {
+        val response = CompletableDeferred<List<JsonObject>>()
         check(pending.putIfAbsent(fnr, response) == null) {
             "HentFSPforPerson: Det finnes allerede en ventende request for samme person."
         }
@@ -64,7 +64,7 @@ class PriTopicResponses {
         }
 
         val response = pending[fnr] ?: return
-        val forespoerselIder =
+        val forespoersler =
             try {
                 (json[KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_LISTE] as? JsonArray)
                     ?.map { forespoersel ->
@@ -76,6 +76,7 @@ class PriTopicResponses {
                                 ?.contentOrNull
                                 ?: throw SerializationException("Mangler forespoerselId"),
                         )
+                        forespoerselObject
                     }
                     ?: throw SerializationException("Mangler forespoersel_liste")
             } catch (e: SerializationException) {
@@ -90,7 +91,7 @@ class PriTopicResponses {
                 return
             }
 
-        response.complete(forespoerselIder)
+        response.complete(forespoersler)
     }
 
     private companion object {

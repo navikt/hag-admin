@@ -5,6 +5,15 @@ import { App } from "./App";
 
 const id = "12345678-1234-1234-1234-123456789abc";
 const fnr = "01234567890";
+const forespoersel = {
+  forespoerselId: id,
+  orgnr: "810007842",
+  vedtaksperiodeId: "87654321-4321-4321-4321-cba987654321",
+  opprettet: "2026-10-01T12:00:00",
+  erBesvart: true,
+  erBegrenset: false,
+  forespurtData: { inntekt: { paakrevd: true } },
+};
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -16,14 +25,17 @@ async function submitLookup() {
 }
 
 describe("Forespørselsoppslag", () => {
-  it("sends JSON to the existing endpoint and displays UUIDs", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify([id])));
+  it("sends JSON to the existing endpoint and displays forespørsler", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify([forespoersel])));
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
 
     await submitLookup();
 
     expect(await screen.findByText(id)).toBeVisible();
+    expect(screen.getByText("810007842")).toBeVisible();
+    expect(screen.getByText("01.10.2026")).toBeVisible();
+    expect(screen.queryByText("Besvart")).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledExactlyOnceWith("/hentEksponerteForespoersler", {
       method: "POST",
       credentials: "same-origin",
@@ -68,7 +80,7 @@ describe("Forespørselsoppslag", () => {
   });
 
   it("clears previous results when the person changes", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([id]))));
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([forespoersel]))));
     render(<App />);
     const user = await submitLookup();
     await screen.findByText(id);
@@ -87,6 +99,22 @@ describe("Forespørselsoppslag", () => {
     await submitLookup();
     expect(await screen.findByRole("alert")).toHaveTextContent(message);
     expect(screen.queryByText("Sensitive backend details")).not.toBeInTheDocument();
+  });
+
+  it("shows the full object when a row is expanded", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([forespoersel]))));
+    render(<App />);
+    const user = await submitLookup();
+    await screen.findByText(id);
+    await user.click(screen.getByRole("button", { name: /vis mer/i }));
+    expect(await screen.findByText(/"paakrevd": true/)).toBeVisible();
+  });
+
+  it("rejects forespørsler without a valid forespoerselId", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{ orgnr: "810007842" }]))));
+    render(<App />);
+    await submitLookup();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Mottok et ugyldig svar fra tjenesten.");
   });
 
   it("rejects an unexpected response shape", async () => {

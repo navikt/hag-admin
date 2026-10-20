@@ -32,6 +32,7 @@ import kotlinx.html.head
 import kotlinx.html.link
 import kotlinx.html.p
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
 import no.nav.hag.Env
 import no.nav.hag.ForespoerselService
 import no.nav.hag.NotifikasjonService
@@ -42,7 +43,6 @@ import no.nav.hag.domain.Status
 import no.nav.hag.kafkaconsumer.PriResponseTimeoutException
 import no.nav.helsearbeidsgiver.brreg.BrregClient
 import no.nav.helsearbeidsgiver.utils.log.logger
-import java.util.UUID
 
 fun Application.configureRouting(
     notifikasjonService: NotifikasjonService,
@@ -304,8 +304,8 @@ fun Application.configureRouting(
                     return@post
                 }
                 try {
-                    val forespoerselIder = forespoerselService.hentEksponerteForespoersler(request.fnr)
-                    call.respond(HttpStatusCode.OK, forespoerselIder.map(UUID::toString))
+                    val forespoersler = forespoerselService.hentEksponerteForespoersler(request.fnr)
+                    call.respond(HttpStatusCode.OK, JsonArray(forespoersler))
                 } catch (e: PriResponseTimeoutException) {
                     call.respond(HttpStatusCode.GatewayTimeout, e.message.orEmpty())
                 } catch (ex: Exception) {

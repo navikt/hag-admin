@@ -3,6 +3,8 @@ package no.nav.hag
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import no.nav.hag.kafkaconsumer.PriTopicResponses
 import no.nav.hag.kafkaproducer.KafkaConfig.FNR
 import no.nav.hag.kafkaproducer.KafkaConfig.FORESPOERSEL_MANUELT_FORKASTET
@@ -33,7 +35,7 @@ interface ForespoerselService {
         brukernavn: String,
     )
 
-    suspend fun hentEksponerteForespoersler(fnr: String): List<UUID>
+    suspend fun hentEksponerteForespoersler(fnr: String): List<JsonObject>
 }
 
 class ForespoerselServiceImpl(
@@ -76,7 +78,7 @@ class ForespoerselServiceImpl(
         sendTilKafka(kafkaMessage, vedtaksperiodeId)
     }
 
-    override suspend fun hentEksponerteForespoersler(fnr: String): List<UUID> {
+    override suspend fun hentEksponerteForespoersler(fnr: String): List<JsonObject> {
         val kafkaMessage =
             mapOf(
                 PRI_FELT_NAVN_BEHOV to HENT_FORESPOERSLER_FOR_PERSON.toJson(),
@@ -132,5 +134,18 @@ class MockForespoerselService : ForespoerselService {
         logger.info("Synkroniserer: $vedtaksperiodeId. Utført av $brukernavn")
     }
 
-    override suspend fun hentEksponerteForespoersler(fnr: String): List<UUID> = List(3) { UUID.randomUUID() }
+    override suspend fun hentEksponerteForespoersler(fnr: String): List<JsonObject> =
+        List(3) {
+            JsonObject(
+                mapOf(
+                    "orgnr" to "810007842".toJson(),
+                    FNR to fnr.toJson(),
+                    PRI_FELT_NAVN_FORESPOERSEL_ID to UUID.randomUUID().toJson(),
+                    "vedtaksperiodeId" to UUID.randomUUID().toJson(),
+                    "erBesvart" to JsonPrimitive(false),
+                    "erBegrenset" to JsonPrimitive(false),
+                    "opprettet" to "2026-10-01T12:00:00".toJson(),
+                ),
+            )
+        }
 }

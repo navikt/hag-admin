@@ -1,4 +1,14 @@
-export async function hentEksponerteForespoersler(fnr: string): Promise<string[]> {
+export type Forespoersel = { forespoerselId: string } & Record<string, unknown>;
+
+const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function erForespoersel(value: unknown): value is Forespoersel {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  const id = (value as Record<string, unknown>).forespoerselId;
+  return typeof id === "string" && uuid.test(id);
+}
+
+export async function hentEksponerteForespoersler(fnr: string): Promise<Forespoersel[]> {
   const response = await fetch("/hentEksponerteForespoersler", {
     method: "POST",
     credentials: "same-origin",
@@ -21,14 +31,7 @@ export async function hentEksponerteForespoersler(fnr: string): Promise<string[]
   }
 
   const result: unknown = await response.json();
-  if (
-    !Array.isArray(result) ||
-    !result.every(
-      (id): id is string =>
-        typeof id === "string" &&
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id),
-    )
-  ) {
+  if (!Array.isArray(result) || !result.every(erForespoersel)) {
     throw new Error("Mottok et ugyldig svar fra tjenesten.");
   }
   return result;
