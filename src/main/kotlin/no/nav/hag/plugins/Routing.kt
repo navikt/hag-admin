@@ -40,9 +40,10 @@ import no.nav.hag.domain.ForespoerselListe
 import no.nav.hag.domain.NotifikasjonBatcher
 import no.nav.hag.domain.Resultat
 import no.nav.hag.domain.Status
-import no.nav.hag.kafkaconsumer.PriResponseTimeoutException
+import no.nav.hag.kafka.PriResponseTimeoutException
 import no.nav.helsearbeidsgiver.brreg.BrregClient
 import no.nav.helsearbeidsgiver.utils.log.logger
+import java.util.UUID
 
 fun Application.configureRouting(
     notifikasjonService: NotifikasjonService,
@@ -312,6 +313,22 @@ fun Application.configureRouting(
                     call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
                 }
             }
+            post("/forkastForespoersel") {
+                val forkastForespoerselRequest = call.receive<ForkastForespoerselRequest>()
+                if (forkastForespoerselRequest.forespoerselId.isBlank()) {
+                    call.respond(HttpStatusCode.BadRequest, "forespoerselId må være utfylt")
+                    return@post
+                }
+                try {
+                    forespoerselService.forkastForespoersel(
+                        UUID.fromString(forkastForespoerselRequest.forespoerselId),
+                        hentBrukernavnFraToken()
+                    )
+                    call.respond(HttpStatusCode.OK)
+                } catch (ex: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
+                }
+            }
         }
     }
 }
@@ -319,6 +336,10 @@ fun Application.configureRouting(
 @Serializable
 internal data class HentEksponerteForespoerslerRequest(
     val fnr: String,
+)
+
+internal data class ForkastForespoerselRequest(
+    val forespoerselId: String,
 )
 
 private fun RoutingContext.hentBrukernavnFraToken(): String =

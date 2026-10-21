@@ -1,6 +1,5 @@
-package no.nav.hag.kafkaconsumer
+package no.nav.hag.kafka
 
-import no.nav.hag.kafkaproducer.KafkaConfig
 import org.apache.kafka.common.errors.WakeupException
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean

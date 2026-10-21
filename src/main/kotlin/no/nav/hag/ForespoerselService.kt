@@ -2,19 +2,20 @@ package no.nav.hag
 
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import no.nav.hag.kafkaconsumer.PriTopicResponses
-import no.nav.hag.kafkaproducer.KafkaConfig.FNR
-import no.nav.hag.kafkaproducer.KafkaConfig.FORESPOERSEL_MANUELT_FORKASTET
-import no.nav.hag.kafkaproducer.KafkaConfig.HENT_FORESPOERSLER_FOR_PERSON
-import no.nav.hag.kafkaproducer.KafkaConfig.HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID
-import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_BEHOV
-import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_ID
-import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_NOTIS
-import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_VEDTAKSPERIODE_ID
-import no.nav.hag.kafkaproducer.KafkaConfig.PRI_TOPIC
+import no.nav.hag.kafka.PriTopicResponses
+import no.nav.hag.kafka.KafkaConfig.FNR
+import no.nav.hag.kafka.KafkaConfig.FORESPOERSEL_MANUELT_FORKASTET
+import no.nav.hag.kafka.KafkaConfig.HENT_FORESPOERSLER_FOR_PERSON
+import no.nav.hag.kafka.KafkaConfig.HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID
+import no.nav.hag.kafka.KafkaConfig.PRI_FELT_NAVN_BEHOV
+import no.nav.hag.kafka.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_ID
+import no.nav.hag.kafka.KafkaConfig.PRI_FELT_NAVN_NOTIS
+import no.nav.hag.kafka.KafkaConfig.PRI_FELT_NAVN_VEDTAKSPERIODE_ID
+import no.nav.hag.kafka.KafkaConfig.PRI_TOPIC
 import no.nav.helsearbeidsgiver.utils.json.toJson
 import no.nav.helsearbeidsgiver.utils.json.toJsonStr
 import no.nav.helsearbeidsgiver.utils.log.logger
@@ -142,9 +143,17 @@ class MockForespoerselService : ForespoerselService {
                     FNR to fnr.toJson(),
                     PRI_FELT_NAVN_FORESPOERSEL_ID to UUID.randomUUID().toJson(),
                     "vedtaksperiodeId" to UUID.randomUUID().toJson(),
-                    "erBesvart" to JsonPrimitive(false),
+                    "erBesvart" to JsonPrimitive(it == 0),
                     "erBegrenset" to JsonPrimitive(false),
-                    "opprettet" to "2026-10-01T12:00:00".toJson(),
+                    "sykmeldingsperioder" to
+                        JsonArray(
+                            listOf(
+                                JsonObject(mapOf("fom" to "2026-09-01".toJson(), "tom" to "2026-09-20".toJson())),
+                                JsonObject(mapOf("fom" to "2026-09-21".toJson(), "tom" to "2026-09-23".toJson())),
+                                JsonObject(mapOf("fom" to "2026-09-24".toJson(), "tom" to "2026-09-26".toJson())),
+                            ),
+                        ),
+                    "opprettet" to "2026-10-0${it + 1}T12:00:00".toJson(),
                 ),
             )
         }

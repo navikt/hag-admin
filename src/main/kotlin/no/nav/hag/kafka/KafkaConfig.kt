@@ -1,4 +1,4 @@
-package no.nav.hag.kafkaproducer
+package no.nav.hag.kafka
 
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig
