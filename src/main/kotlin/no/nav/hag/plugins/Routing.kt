@@ -337,7 +337,7 @@ fun Application.configureRouting(
 internal data class HentEksponerteForespoerslerRequest(
     val fnr: String,
 )
-
+@Serializable
 internal data class ForkastForespoerselRequest(
     val forespoerselId: String,
 )
