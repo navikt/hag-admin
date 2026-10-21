@@ -15,9 +15,9 @@ import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.serialization.json.Json
+import no.nav.hag.kafka.KafkaConfig
 import no.nav.hag.kafka.PriTopicConsumer
 import no.nav.hag.kafka.PriTopicResponses
-import no.nav.hag.kafka.KafkaConfig
 import no.nav.hag.plugins.configureRouting
 import no.nav.hag.plugins.configureSecurity
 import no.nav.helsearbeidsgiver.arbeidsgivernotifikasjon.ArbeidsgiverNotifikasjonKlient

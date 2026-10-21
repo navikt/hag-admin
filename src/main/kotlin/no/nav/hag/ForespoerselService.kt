@@ -6,7 +6,6 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import no.nav.hag.kafka.PriTopicResponses
 import no.nav.hag.kafka.KafkaConfig.FNR
 import no.nav.hag.kafka.KafkaConfig.FORESPOERSEL_MANUELT_FORKASTET
 import no.nav.hag.kafka.KafkaConfig.HENT_FORESPOERSLER_FOR_PERSON
@@ -16,6 +15,7 @@ import no.nav.hag.kafka.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_ID
 import no.nav.hag.kafka.KafkaConfig.PRI_FELT_NAVN_NOTIS
 import no.nav.hag.kafka.KafkaConfig.PRI_FELT_NAVN_VEDTAKSPERIODE_ID
 import no.nav.hag.kafka.KafkaConfig.PRI_TOPIC
+import no.nav.hag.kafka.PriTopicResponses
 import no.nav.helsearbeidsgiver.utils.json.toJson
 import no.nav.helsearbeidsgiver.utils.json.toJsonStr
 import no.nav.helsearbeidsgiver.utils.log.logger

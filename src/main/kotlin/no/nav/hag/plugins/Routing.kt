@@ -322,7 +322,7 @@ fun Application.configureRouting(
                 try {
                     forespoerselService.forkastForespoersel(
                         UUID.fromString(forkastForespoerselRequest.forespoerselId),
-                        hentBrukernavnFraToken()
+                        hentBrukernavnFraToken(),
                     )
                     call.respond(HttpStatusCode.OK)
                 } catch (ex: Exception) {
