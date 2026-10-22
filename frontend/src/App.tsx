@@ -3,7 +3,7 @@ import {useState} from "react";
 import type {FormEvent} from "react";
 import {hentEksponerteForespoersler} from "./api";
 import type {Forespoersel} from "./api";
-import {NavLogo} from "./NavLogo";
+import navLogo from "./NavLogo.svg";
 
 function visVerdi(value: unknown): string {
     if (value === undefined || value === null) return "–";
@@ -97,7 +97,7 @@ export function App() {
             <div className="topbar">
                 <div className="topbar__inner">
                     <a href="/" className="topbar__home">
-                        <NavLogo className="topbar__logo"/>
+                        <img src={navLogo} alt="Nav" className="topbar__logo"/>
                         <span>HAG Admin</span>
                     </a>
                 </div>

@@ -32,7 +32,6 @@ body {
 .topbar__logo {
   width: 5rem;
   height: auto;
-  color: var(--ax-text-logo);
 }
 
 .page-header {
