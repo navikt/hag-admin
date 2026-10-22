@@ -10,6 +10,7 @@ const forespoersel = {
   orgnr: "810007842",
   vedtaksperiodeId: "87654321-4321-4321-4321-cba987654321",
   opprettet: "2026-10-01T12:00:00",
+  sykmeldingsperioder: [{ fom: "2026-09-01", tom: "2026-09-10" }, { fom: "2026-09-15", tom: "2026-09-30" }],
   erBesvart: true,
   erBegrenset: false,
   forespurtData: { inntekt: { paakrevd: true } },
@@ -20,7 +21,7 @@ afterEach(() => vi.unstubAllGlobals());
 async function submitLookup() {
   const user = userEvent.setup();
   await user.type(screen.getByLabelText("Fødselsnummer"), fnr);
-  await user.click(screen.getByRole("button", { name: "Hent eksponerte forespørselid-er" }));
+  await user.click(screen.getByRole("button", { name: "Søk" }));
   return user;
 }
 
@@ -32,10 +33,11 @@ describe("Forespørselsoppslag", () => {
 
     await submitLookup();
 
-    expect(await screen.findByText(id)).toBeVisible();
-    expect(screen.getByText("810007842")).toBeVisible();
-    expect(screen.getByText("01.10.2026")).toBeVisible();
-    expect(screen.queryByText("Besvart")).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: `Forespørsel ${id}` })).toBeVisible();
+    expect(screen.getByText("Org.nr. 810007842")).toBeVisible();
+    expect(screen.getByText("Gjelder sykmeldingsperiode 01.09.2026 – 30.09.2026")).toBeVisible();
+    expect(screen.getByText("Opprettet 01.10.2026")).toBeVisible();
+    expect(screen.getByText("Besvart")).toBeVisible();
     expect(fetchMock).toHaveBeenCalledExactlyOnceWith("/hentEksponerteForespoersler", {
       method: "POST",
       credentials: "same-origin",
@@ -45,13 +47,19 @@ describe("Forespørselsoppslag", () => {
     });
   });
 
+  it("shows the Nav logo linking to HAG Admin", () => {
+    render(<App />);
+    expect(screen.getByRole("img", { name: "Nav" })).toBeVisible();
+    expect(screen.getByRole("link", { name: /^Nav\s*HAG Admin$/ })).toHaveAttribute("href", "/");
+  });
+
   it("rejects invalid input without sending a request", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("Fødselsnummer"), "123");
-    await user.click(screen.getByRole("button", { name: "Hent eksponerte forespørselid-er" }));
+    await user.click(screen.getByRole("button", { name: "Søk" }));
 
     expect(screen.getByText("Skriv inn et fødselsnummer med 11 sifre.")).toBeVisible();
     expect(fetchMock).not.toHaveBeenCalled();
@@ -61,7 +69,7 @@ describe("Forespørselsoppslag", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("[]")));
     render(<App />);
     await submitLookup();
-    expect(await screen.findByText("Ingen eksponerte forespørselid-er funnet.")).toBeVisible();
+    expect(await screen.findByText("Ingen treff.")).toBeVisible();
   });
 
   it("disables duplicate submissions while awaiting the response", async () => {
@@ -76,16 +84,16 @@ describe("Forespørselsoppslag", () => {
     await user.click(button);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     complete(new Response("[]"));
-    expect(await screen.findByText("Ingen eksponerte forespørselid-er funnet.")).toBeVisible();
+    expect(await screen.findByText("Ingen treff.")).toBeVisible();
   });
 
   it("clears previous results when the person changes", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([forespoersel]))));
     render(<App />);
     const user = await submitLookup();
-    await screen.findByText(id);
+    await screen.findByRole("heading", { name: `Forespørsel ${id}` });
     await user.clear(screen.getByLabelText("Fødselsnummer"));
-    expect(screen.queryByText(id)).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: `Forespørsel ${id}` })).not.toBeInTheDocument();
   });
 
   it.each([
@@ -105,9 +113,27 @@ describe("Forespørselsoppslag", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([forespoersel]))));
     render(<App />);
     const user = await submitLookup();
-    await screen.findByText(id);
-    await user.click(screen.getByRole("button", { name: /vis mer/i }));
+    await screen.findByRole("heading", { name: `Forespørsel ${id}` });
+    await user.click(screen.getByRole("button", { name: "Vis hele objektet" }));
     expect(await screen.findByText(/"paakrevd": true/)).toBeVisible();
+  });
+
+  it("shows ikke besvart for unanswered forespørsler", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{ ...forespoersel, erBesvart: false }]))));
+    render(<App />);
+    await submitLookup();
+    expect(await screen.findByText("Ikke besvart")).toBeVisible();
+  });
+
+  it("sorts forespørsler by opprettet", async () => {
+    const eldre = { ...forespoersel, forespoerselId: "aaaaaaaa-1234-1234-1234-123456789abc", opprettet: "2026-09-01T08:00:00" };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([eldre, forespoersel]))));
+    render(<App />);
+    const user = await submitLookup();
+    const titler = async () => (await screen.findAllByRole("heading", { level: 3 })).map((heading) => heading.textContent);
+    expect(await titler()).toEqual([`Forespørsel ${id}`, `Forespørsel ${eldre.forespoerselId}`]);
+    await user.selectOptions(screen.getByLabelText("Sortering"), "eldste");
+    expect(await titler()).toEqual([`Forespørsel ${eldre.forespoerselId}`, `Forespørsel ${id}`]);
   });
 
   it("rejects forespørsler without a valid forespoerselId", async () => {
@@ -129,6 +155,6 @@ describe("Forespørselsoppslag", () => {
     render(<App />);
     await submitLookup();
     expect(await screen.findByRole("alert")).toHaveTextContent("Kontroller forbindelsen");
-    await waitFor(() => expect(screen.getByRole("button", { name: "Hent eksponerte forespørselid-er" })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Søk" })).toBeEnabled());
   });
 });
