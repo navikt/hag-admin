@@ -7,6 +7,8 @@ export default defineConfig({
   server: {
     proxy: {
       "/hentEksponerteForespoersler": "http://localhost:8080",
+      "/hentBrukernavn": "http://localhost:8080",
+      "/forkastForespoersel": "http://localhost:8080",
     },
   },
   test: {

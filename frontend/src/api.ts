@@ -2,6 +2,19 @@ export type Forespoersel = { forespoerselId: string } & Record<string, unknown>;
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+export async function hentBrukernavn(): Promise<string> {
+  const response = await fetch("/hentBrukernavn", {
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Kunne ikke hente brukernavn.");
+  }
+
+  return response.text();
+}
+
 function erForespoersel(value: unknown): value is Forespoersel {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
   const id = (value as Record<string, unknown>).forespoerselId;
@@ -35,4 +48,23 @@ export async function hentEksponerteForespoersler(fnr: string): Promise<Forespoe
     throw new Error("Mottok et ugyldig svar fra tjenesten.");
   }
   return result;
+}
+
+export async function forkastForespoersel(forespoerselId: string): Promise<void> {
+  const response = await fetch("/forkastForespoersel", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ forespoerselId }),
+  });
+
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error("Du mangler tilgang eller innloggingen har utløpt. Logg inn på nytt.");
+    }
+    throw new Error("Kunne ikke forkaste forespørselen. Prøv igjen senere.");
+  }
 }

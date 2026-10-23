@@ -18,6 +18,10 @@ body {
   max-width: 80rem;
   margin: 0 auto;
   padding: var(--ax-space-16);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ax-space-16);
 }
 
 .topbar__home {
@@ -32,6 +36,11 @@ body {
 .topbar__logo {
   width: 5rem;
   height: auto;
+}
+
+.topbar__user {
+  color: var(--ax-text-neutral);
+  text-align: right;
 }
 
 .page-header {
@@ -99,6 +108,13 @@ body {
 .card__top {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: var(--ax-space-8);
+}
+
+.card__actions {
+  display: flex;
+  justify-content: flex-end;
   align-items: center;
   gap: var(--ax-space-8);
 }

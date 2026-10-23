@@ -25,15 +25,28 @@ async function submitLookup() {
   return user;
 }
 
+function stubFetch(requestMock: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input === "/hentBrukernavn"
+        ? Promise.resolve(new Response("testbruker"))
+        : requestMock(input, init),
+    ),
+  );
+}
+
 describe("Forespørselsoppslag", () => {
-  it("sends JSON to the existing endpoint and displays forespørsler", async () => {
+  it("sender JSON til det eksisterende endepunktet og viser forespørsler", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify([forespoersel])));
-    vi.stubGlobal("fetch", fetchMock);
+    stubFetch(fetchMock);
     render(<App />);
 
     await submitLookup();
 
     expect(await screen.findByRole("heading", { name: `Forespørsel ${id}` })).toBeVisible();
+    expect(screen.getByText("testbruker")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Eksponerte forespørsler" })).toBeVisible();
     expect(screen.getByText("Org.nr. 810007842")).toBeVisible();
     expect(screen.getByText("Gjelder sykmeldingsperiode 01.09.2026 – 30.09.2026")).toBeVisible();
     expect(screen.getByText("Opprettet 01.10.2026")).toBeVisible();
@@ -47,15 +60,15 @@ describe("Forespørselsoppslag", () => {
     });
   });
 
-  it("shows the Nav logo linking to HAG Admin", () => {
+  it("viser Nav-logoen med lenke til HAG Admin", () => {
     render(<App />);
     expect(screen.getByRole("img", { name: "Nav" })).toBeVisible();
     expect(screen.getByRole("link", { name: /^Nav\s*HAG Admin$/ })).toHaveAttribute("href", "/");
   });
 
-  it("rejects invalid input without sending a request", async () => {
+  it("avviser ugyldig input uten å sende en forespørsel", async () => {
     const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
+    stubFetch(fetchMock);
     render(<App />);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("Fødselsnummer"), "123");
@@ -65,17 +78,17 @@ describe("Forespørselsoppslag", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("shows empty results", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("[]")));
+  it("viser en melding når søket ikke gir treff", async () => {
+    stubFetch(vi.fn().mockResolvedValue(new Response("[]")));
     render(<App />);
     await submitLookup();
     expect(await screen.findByText("Ingen treff.")).toBeVisible();
   });
 
-  it("disables duplicate submissions while awaiting the response", async () => {
+  it("hindrer gjentatte søk mens den venter på svar", async () => {
     let complete: (response: Response) => void = () => { throw new Error("Request not started"); };
     const fetchMock = vi.fn(() => new Promise<Response>((resolve) => { complete = resolve; }));
-    vi.stubGlobal("fetch", fetchMock);
+    stubFetch(fetchMock);
     render(<App />);
     const user = await submitLookup();
 
@@ -87,8 +100,8 @@ describe("Forespørselsoppslag", () => {
     expect(await screen.findByText("Ingen treff.")).toBeVisible();
   });
 
-  it("clears previous results when the person changes", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([forespoersel]))));
+  it("fjerner tidligere resultater når personen endres", async () => {
+    stubFetch(vi.fn().mockResolvedValue(new Response(JSON.stringify([forespoersel]))));
     render(<App />);
     const user = await submitLookup();
     await screen.findByRole("heading", { name: `Forespørsel ${id}` });
@@ -101,33 +114,78 @@ describe("Forespørselsoppslag", () => {
     [403, "Du mangler tilgang eller innloggingen har utløpt."],
     [504, "Tidsavbrudd ved henting av forespørsler."],
     [500, "Kunne ikke hente forespørsler."],
-  ])("handles HTTP %s without displaying backend details", async (status, message) => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("Sensitive backend details", { status })));
+  ])("håndterer HTTP %s uten å vise detaljer fra backend", async (status, message) => {
+    stubFetch(vi.fn().mockResolvedValue(new Response("Sensitive backend details", { status })));
     render(<App />);
     await submitLookup();
     expect(await screen.findByRole("alert")).toHaveTextContent(message);
     expect(screen.queryByText("Sensitive backend details")).not.toBeInTheDocument();
   });
 
-  it("shows the full object when a row is expanded", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([forespoersel]))));
+  it("viser hele objektet når et kort utvides", async () => {
+    stubFetch(vi.fn().mockResolvedValue(new Response(JSON.stringify([forespoersel]))));
     render(<App />);
     const user = await submitLookup();
     await screen.findByRole("heading", { name: `Forespørsel ${id}` });
-    await user.click(screen.getByRole("button", { name: "Vis hele objektet" }));
+    await user.click(screen.getByRole("button", { name: "Vis mer" }));
     expect(await screen.findByText(/"paakrevd": true/)).toBeVisible();
   });
 
-  it("shows ikke besvart for unanswered forespørsler", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{ ...forespoersel, erBesvart: false }]))));
+  it("viser «Ikke besvart» for ubesvarte forespørsler", async () => {
+    stubFetch(vi.fn().mockResolvedValue(new Response(JSON.stringify([{ ...forespoersel, erBesvart: false }]))));
     render(<App />);
     await submitLookup();
     expect(await screen.findByText("Ikke besvart")).toBeVisible();
   });
 
-  it("sorts forespørsler by opprettet", async () => {
+  it("viser en kompakt forkast-knapp bare for ubesvarte forespørsler og beholder kortet etter forkasting", async () => {
+    const ubesvart = {
+      ...forespoersel,
+      forespoerselId: "aaaaaaaa-1234-1234-1234-123456789abc",
+      erBesvart: false,
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify([forespoersel, ubesvart])))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+    stubFetch(fetchMock);
+    render(<App />);
+
+    const user = await submitLookup();
+    expect(await screen.findByRole("heading", { name: `Forespørsel ${ubesvart.forespoerselId}` })).toBeVisible();
+    expect(screen.getAllByRole("button", { name: `Forkast forespørsel ${ubesvart.forespoerselId}` })).toHaveLength(1);
+
+    await user.click(screen.getByRole("button", { name: `Forkast forespørsel ${ubesvart.forespoerselId}` }));
+
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "/forkastForespoersel", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ forespoerselId: ubesvart.forespoerselId }),
+    });
+    expect(await screen.findByRole("heading", { name: `Forespørsel ${ubesvart.forespoerselId}` })).toBeVisible();
+    expect(screen.getByText("Forkastet")).toBeVisible();
+    expect(screen.queryByRole("button", { name: `Forkast forespørsel ${ubesvart.forespoerselId}` })).not.toBeInTheDocument();
+  });
+
+  it("beholder en ubesvart forespørsel og viser en feilmelding hvis forkasting mislykkes", async () => {
+    const ubesvart = { ...forespoersel, erBesvart: false };
+    stubFetch(
+      vi.fn()
+        .mockResolvedValueOnce(new Response(JSON.stringify([ubesvart])))
+        .mockResolvedValueOnce(new Response(null, { status: 500 })),
+    );
+    render(<App />);
+
+    const user = await submitLookup();
+    await user.click(await screen.findByRole("button", { name: `Forkast forespørsel ${id}` }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Kunne ikke forkaste forespørselen.");
+    expect(screen.getByRole("heading", { name: `Forespørsel ${id}` })).toBeVisible();
+  });
+
+  it("sorterer forespørsler etter opprettelsestidspunkt", async () => {
     const eldre = { ...forespoersel, forespoerselId: "aaaaaaaa-1234-1234-1234-123456789abc", opprettet: "2026-09-01T08:00:00" };
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([eldre, forespoersel]))));
+    stubFetch(vi.fn().mockResolvedValue(new Response(JSON.stringify([eldre, forespoersel]))));
     render(<App />);
     const user = await submitLookup();
     const titler = async () => (await screen.findAllByRole("heading", { level: 3 })).map((heading) => heading.textContent);
@@ -136,22 +194,22 @@ describe("Forespørselsoppslag", () => {
     expect(await titler()).toEqual([`Forespørsel ${eldre.forespoerselId}`, `Forespørsel ${id}`]);
   });
 
-  it("rejects forespørsler without a valid forespoerselId", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{ orgnr: "810007842" }]))));
+  it("avviser forespørsler uten gyldig forespørsels-ID", async () => {
+    stubFetch(vi.fn().mockResolvedValue(new Response(JSON.stringify([{ orgnr: "810007842" }]))));
     render(<App />);
     await submitLookup();
     expect(await screen.findByRole("alert")).toHaveTextContent("Mottok et ugyldig svar fra tjenesten.");
   });
 
-  it("rejects an unexpected response shape", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response('{"unexpected":true}')));
+  it("avviser svar med uventet format", async () => {
+    stubFetch(vi.fn().mockResolvedValue(new Response('{"unexpected":true}')));
     render(<App />);
     await submitLookup();
     expect(await screen.findByRole("alert")).toHaveTextContent("Mottok et ugyldig svar fra tjenesten.");
   });
 
-  it("handles a network failure and allows retry", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+  it("håndterer nettverksfeil og lar brukeren prøve igjen", async () => {
+    stubFetch(vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
     render(<App />);
     await submitLookup();
     expect(await screen.findByRole("alert")).toHaveTextContent("Kontroller forbindelsen");

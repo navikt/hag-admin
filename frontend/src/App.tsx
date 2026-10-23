@@ -1,7 +1,7 @@
-import {BodyShort, Detail, Heading, Label, Link, LocalAlert, ReadMore, Search, Select, Tag} from "@navikt/ds-react";
-import {useState} from "react";
+import {BodyShort, Button, Detail, Heading, Label, Link, LocalAlert, ReadMore, Search, Select, Tag} from "@navikt/ds-react";
+import {useEffect, useState} from "react";
 import type {FormEvent} from "react";
-import {hentEksponerteForespoersler} from "./api";
+import {forkastForespoersel, hentBrukernavn, hentEksponerteForespoersler} from "./api";
 import type {Forespoersel} from "./api";
 import navLogo from "./NavLogo.svg";
 
@@ -25,6 +25,28 @@ function visPeriode(value: unknown): string | undefined {
 
 function ForespoerselKort({forespoersel}: { forespoersel: Forespoersel }) {
     const periode = visPeriode(forespoersel.sykmeldingsperioder);
+    const [forkaster, setForkaster] = useState(false);
+    const [forkastet, setForkastet] = useState(false);
+    const [forkastFeil, setForkastFeil] = useState<string>();
+
+    async function forkast() {
+        setForkaster(true);
+        setForkastFeil(undefined);
+        try {
+            await forkastForespoersel(forespoersel.forespoerselId);
+        } catch (cause) {
+            setForkastFeil(
+                cause instanceof Error && !(cause instanceof TypeError || cause instanceof SyntaxError)
+                    ? cause.message
+                    : "Kunne ikke forkaste forespørselen. Kontroller forbindelsen og prøv igjen.",
+            );
+            return;
+        } finally {
+            setForkaster(false);
+        }
+        setForkastet(true);
+    }
+
     return (
         <article className="card" aria-labelledby={`fsp-${forespoersel.forespoerselId}`}>
             <div className="card__top">
@@ -48,15 +70,38 @@ function ForespoerselKort({forespoersel}: { forespoersel: Forespoersel }) {
                 <BodyShort size="small"><code>{visVerdi(forespoersel.vedtaksperiodeId)}</code></BodyShort>
             </div>
             <Detail>Opprettet {visDato(forespoersel.opprettet)}</Detail>
-            <ReadMore header="Vis hele objektet" size="small">
+            <ReadMore header="Vis mer" size="small">
                 <pre className="json">{JSON.stringify(forespoersel, null, 2)}</pre>
             </ReadMore>
-
+            {forespoersel.erBesvart === false && !forkastet && (
+                <div className="card__actions">
+                    <Button
+                        variant="danger"
+                        size="small"
+                        loading={forkaster}
+                        onClick={forkast}
+                        aria-label={`Forkast forespørsel ${forespoersel.forespoerselId}`}
+                    >
+                        Forkast
+                    </Button>
+                    {forkastFeil && (
+                        <LocalAlert status="error">
+                            <LocalAlert.Header>
+                                <LocalAlert.Title as="h4">Kunne ikke forkaste</LocalAlert.Title>
+                            </LocalAlert.Header>
+                            <LocalAlert.Content>{forkastFeil}</LocalAlert.Content>
+                        </LocalAlert>
+                    )}
+                </div>
+            )}
+            {forkastet && <Tag variant="outline" size="small" data-color="neutral">Forkastet</Tag>}
         </article>
     );
 }
 
 export function App() {
+    const [brukernavn, setBrukernavn] = useState<string>();
+    const [brukernavnFeil, setBrukernavnFeil] = useState(false);
     const [fnr, setFnr] = useState("");
     const [inputError, setInputError] = useState<string>();
     const [error, setError] = useState<string>();
@@ -67,6 +112,12 @@ export function App() {
         const forskjell = String(b.opprettet ?? "").localeCompare(String(a.opprettet ?? ""));
         return sortering === "nyeste" ? forskjell : -forskjell;
     });
+
+    useEffect(() => {
+        hentBrukernavn()
+            .then(setBrukernavn)
+            .catch(() => setBrukernavnFeil(true));
+    }, []);
 
     async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -100,6 +151,8 @@ export function App() {
                         <img src={navLogo} alt="Nav" className="topbar__logo"/>
                         <span>HAG Admin</span>
                     </a>
+                    {brukernavn && <span className="topbar__user">{brukernavn}</span>}
+                    {brukernavnFeil && <BodyShort className="topbar__user" role="alert">Kunne ikke hente brukernavn.</BodyShort>}
                 </div>
             </div>
             <header className="page-header">
@@ -175,7 +228,8 @@ export function App() {
                                     </div>
                                     {sortert.map((forespoersel) => (
                                         <ForespoerselKort key={forespoersel.forespoerselId}
-                                                          forespoersel={forespoersel}/>
+                                                          forespoersel={forespoersel}
+                                        />
                                     ))}
                                 </>
                             )}

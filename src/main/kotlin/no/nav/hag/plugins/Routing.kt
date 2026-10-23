@@ -43,6 +43,7 @@ import no.nav.hag.domain.Status
 import no.nav.hag.kafka.PriResponseTimeoutException
 import no.nav.helsearbeidsgiver.brreg.BrregClient
 import no.nav.helsearbeidsgiver.utils.log.logger
+import no.nav.helsearbeidsgiver.utils.log.sikkerLogger
 import java.util.UUID
 
 fun Application.configureRouting(
@@ -70,6 +71,9 @@ fun Application.configureRouting(
         }
         authenticate {
             staticResources("/forespoersler", "frontend")
+            get("/hentBrukernavn") {
+                call.respondText(hentBrukernavnFraToken())
+            }
             get("/") {
                 val brukernavn = hentBrukernavnFraToken()
                 call.respondHtml(HttpStatusCode.OK) {
@@ -310,7 +314,8 @@ fun Application.configureRouting(
                 } catch (e: PriResponseTimeoutException) {
                     call.respond(HttpStatusCode.GatewayTimeout, e.message.orEmpty())
                 } catch (ex: Exception) {
-                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
+                    sikkerLogger().error("Feil ved henting av eksponerte forespørsler: ${ex.message}", ex)
+                    call.respond(HttpStatusCode.InternalServerError, "Feil ved henting av eksponerte forespørsler, prøv igjen senere")
                 }
             }
             post("/forkastForespoersel") {
@@ -326,7 +331,8 @@ fun Application.configureRouting(
                     )
                     call.respond(HttpStatusCode.OK)
                 } catch (ex: Exception) {
-                    call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
+                    sikkerLogger().error("Feil ved forkasting av forespørsel: ${ex.message}", ex)
+                    call.respond(HttpStatusCode.InternalServerError, "Feil ved forkasting av forespørsel, prøv igjen senere")
                 }
             }
         }
