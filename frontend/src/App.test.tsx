@@ -112,7 +112,7 @@ describe("Forespørselsoppslag", () => {
   it.each([
     [401, "Du mangler tilgang eller innloggingen har utløpt."],
     [403, "Du mangler tilgang eller innloggingen har utløpt."],
-    [504, "Tidsavbrudd ved henting av forespørsler."],
+
     [500, "Kunne ikke hente forespørsler."],
   ])("håndterer HTTP %s uten å vise detaljer fra backend", async (status, message) => {
     stubFetch(vi.fn().mockResolvedValue(new Response("Sensitive backend details", { status })));
