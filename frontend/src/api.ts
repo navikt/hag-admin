@@ -37,9 +37,7 @@ export async function hentEksponerteForespoersler(fnr: string): Promise<Forespoe
     if (response.status === 401 || response.status === 403) {
       throw new Error("Du mangler tilgang eller innloggingen har utløpt. Logg inn på nytt.");
     }
-    if (response.status === 504) {
-      throw new Error("Tidsavbrudd ved henting av forespørsler. Prøv igjen senere.");
-    }
+
     throw new Error("Kunne ikke hente forespørsler. Prøv igjen senere.");
   }
 
