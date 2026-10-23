@@ -63,7 +63,9 @@ class PriTopicResponses {
         }
 
         val response = pending[fnr] ?: return
-        sikkerLogger.info("HentFSPforPerson: mottok svar for fnr=$fnr, forespoersel_liste=${json[KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_LISTE]}")
+        sikkerLogger.info(
+            "HentFSPforPerson: mottok svar for fnr=$fnr, forespoersel_liste=${json[KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_LISTE]}",
+        )
         val forespoersler =
             try {
                 (json[KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_LISTE] as? JsonArray)
