@@ -324,9 +324,16 @@ fun Application.configureRouting(
                     call.respond(HttpStatusCode.BadRequest, "forespoerselId må være utfylt")
                     return@post
                 }
+                val forespoerselId =
+                    try {
+                        UUID.fromString(forkastForespoerselRequest.forespoerselId)
+                    } catch (_: IllegalArgumentException) {
+                        call.respond(HttpStatusCode.BadRequest, "forespoerselId må være en gyldig UUID")
+                        return@post
+                    }
                 try {
                     forespoerselService.forkastForespoersel(
-                        UUID.fromString(forkastForespoerselRequest.forespoerselId),
+                        forespoerselId,
                         hentBrukernavnFraToken(),
                     )
                     call.respond(HttpStatusCode.OK)
