@@ -69,7 +69,7 @@ class PriTopicResponses {
         if ((json[KafkaConfig.PRI_FELT_NAVN_NOTIS] as? JsonPrimitive)?.contentOrNull !=
             KafkaConfig.PRI_NOTIS_FORESPOERSEL_LISTE_FOR_PERSON
         ) {
-            logger.debug("HentFSPforPerson: ignorerer PRI-melding med annen eller manglende notis")
+            logger.info("HentFSPforPerson: ignorerer PRI-melding med annen eller manglende notis")
             return
         }
 

@@ -53,12 +53,12 @@ class PriTopicConsumer(
             while (running.get()) {
                 val records = consumer.poll(Duration.ofSeconds(1))
                 if (!records.isEmpty) {
-                    logger.debug("PRI-consumer mottok {} meldinger", records.count())
+                    logger.info("PRI-consumer mottok {} meldinger", records.count())
                     records.forEach { record ->
                         priTopicResponses.receive(record.value())
                     }
                     consumer.commitSync()
-                    logger.debug("PRI-consumer lagret offsets")
+                    logger.info("PRI-consumer lagret offsets")
                 }
             }
         } catch (e: WakeupException) {
