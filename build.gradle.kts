@@ -68,10 +68,6 @@ tasks.processResources {
     }
 }
 
-tasks.named<JavaExec>("run") {
-    systemProperty("logback.configurationFile", "logback-local.xml")
-}
-
 tasks.check {
     dependsOn(testFrontend)
 }

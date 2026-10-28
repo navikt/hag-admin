@@ -160,9 +160,9 @@ export function App() {
                     <nav aria-label="Brødsmulesti" className="breadcrumbs">
                         <Link href="/">HAG Admin</Link>
                         <span aria-hidden="true">›</span>
-                        <span aria-current="page">Eksponerte forespørsler</span>
+                        <span aria-current="page">Forespørsler</span>
                     </nav>
-                    <Heading level="1" size="xlarge">Eksponerte forespørsler</Heading>
+                    <Heading level="1" size="xlarge">Forespørsler</Heading>
                 </div>
             </header>
             <div className="page-body">
@@ -192,7 +192,7 @@ export function App() {
                     </form>
                 </aside>
                 <main className="content" aria-live="polite" aria-busy={loading}>
-                    {loading && <BodyShort>Henter eksponerte forespørsler …</BodyShort>}
+                    {loading && <BodyShort>Henter Forespørsler …</BodyShort>}
                     {error && (
                         <LocalAlert status="error">
                             <LocalAlert.Header>
@@ -202,7 +202,7 @@ export function App() {
                         </LocalAlert>
                     )}
                     {!loading && !error && !result && (
-                        <BodyShort>Søk med fødselsnummer for å se eksponerte forespørsler for en person.</BodyShort>
+                        <BodyShort>Søk med fødselsnummer for å se forespørsler for en person.</BodyShort>
                     )}
                     {sortert && (
                         <section aria-labelledby="result-heading" className="result">
