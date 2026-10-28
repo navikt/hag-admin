@@ -46,7 +46,7 @@ describe("Forespørselsoppslag", () => {
 
     expect(await screen.findByRole("heading", { name: `Forespørsel ${id}` })).toBeVisible();
     expect(screen.getByText("testbruker")).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Eksponerte forespørsler" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Forespørsler" })).toBeVisible();
     expect(screen.getByText("Org.nr. 810007842")).toBeVisible();
     expect(screen.getByText("Gjelder sykmeldingsperiode 01.09.2026 – 30.09.2026")).toBeVisible();
     expect(screen.getByText("Opprettet 01.10.2026")).toBeVisible();
