@@ -1,3 +1,4 @@
+import com.github.gradle.node.npm.task.NpmTask
 import kotlin.collections.forEach
 val kotlinVersion = project.property("kotlinVersion") as String
 val ktorVersion = project.property("ktorVersion") as String
@@ -14,6 +15,7 @@ plugins {
     kotlin("jvm") version "2.4.0"
     kotlin("plugin.serialization") version "2.4.0"
     id("org.jmailen.kotlinter") version "5.7.0"
+    id("com.github.node-gradle.node") version "7.1.0"
 }
 
 group = "no.nav.hag"
@@ -25,6 +27,53 @@ kotlin {
 
 application {
     mainClass.set("no.nav.hag.ApplicationKt")
+}
+
+node {
+    version.set("22.14.0")
+    download.set(true)
+    workDir.set(layout.buildDirectory.dir("nodejs"))
+    nodeProjectDir.set(layout.projectDirectory.dir("frontend"))
+    npmInstallCommand.set("ci")
+}
+
+val buildFrontend = tasks.register<NpmTask>("buildFrontend") {
+    dependsOn(tasks.npmInstall)
+    args.set(listOf("run", "build"))
+    inputs.dir("frontend/src")
+    inputs.files(
+        "frontend/package.json",
+        "frontend/package-lock.json",
+        "frontend/index.html",
+        "frontend/vite.config.ts",
+        "frontend/tsconfig.json",
+    )
+    outputs.dir("frontend/dist")
+}
+
+val testFrontend = tasks.register<NpmTask>("testFrontend") {
+    dependsOn(tasks.npmInstall)
+    args.set(listOf("test"))
+}
+
+tasks.register<NpmTask>("runFrontend") {
+    dependsOn(tasks.npmInstall)
+    args.set(listOf("run", "dev"))
+}
+
+tasks.processResources {
+    dependsOn(buildFrontend)
+    from("frontend/dist") {
+        into("frontend")
+    }
+}
+
+tasks.check {
+    dependsOn(testFrontend)
+}
+
+tasks.clean {
+    delete("frontend/dist")
 }
 
 configurations.all {

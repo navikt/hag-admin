@@ -7,7 +7,9 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.auth.authenticate
 import io.ktor.server.html.respondHtml
 import io.ktor.server.http.content.staticResources
+import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.request.authorization
+import io.ktor.server.request.receive
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -29,6 +31,8 @@ import kotlinx.html.h2
 import kotlinx.html.head
 import kotlinx.html.link
 import kotlinx.html.p
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
 import no.nav.hag.Env
 import no.nav.hag.ForespoerselService
 import no.nav.hag.NotifikasjonService
@@ -36,8 +40,11 @@ import no.nav.hag.domain.ForespoerselListe
 import no.nav.hag.domain.NotifikasjonBatcher
 import no.nav.hag.domain.Resultat
 import no.nav.hag.domain.Status
+import no.nav.hag.kafka.PriResponseTimeoutException
 import no.nav.helsearbeidsgiver.brreg.BrregClient
 import no.nav.helsearbeidsgiver.utils.log.logger
+import no.nav.helsearbeidsgiver.utils.log.sikkerLogger
+import java.util.UUID
 
 fun Application.configureRouting(
     notifikasjonService: NotifikasjonService,
@@ -63,6 +70,10 @@ fun Application.configureRouting(
             call.respond(appMicrometerRegistry.scrape())
         }
         authenticate {
+            staticResources("/forespoersler", "frontend")
+            get("/hentBrukernavn") {
+                call.respondText(hentBrukernavnFraToken())
+            }
             get("/") {
                 val brukernavn = hentBrukernavnFraToken()
                 call.respondHtml(HttpStatusCode.OK) {
@@ -77,6 +88,11 @@ fun Application.configureRouting(
                             text(
                                 "Logget inn som: $brukernavn",
                             )
+                        }
+                        p {
+                            a(href = "/forespoersler/") {
+                                +"Hent forespørsler"
+                            }
                         }
                         p {
                             a(href = "admin-ui/finnSak-form.html") {
@@ -280,9 +296,65 @@ fun Application.configureRouting(
                     call.respond(HttpStatusCode.InternalServerError, ex.message.toString())
                 }
             }
+            post("/hentEksponerteForespoersler") {
+                val request =
+                    try {
+                        call.receive<HentEksponerteForespoerslerRequest>()
+                    } catch (e: BadRequestException) {
+                        call.respond(HttpStatusCode.BadRequest, "Ugyldig JSON-body")
+                        return@post
+                    }
+                if (request.fnr.isBlank()) {
+                    call.respond(HttpStatusCode.BadRequest, "fnr må være utfylt")
+                    return@post
+                }
+                try {
+                    val forespoersler = forespoerselService.hentEksponerteForespoersler(request.fnr)
+                    call.respond(HttpStatusCode.OK, JsonArray(forespoersler))
+                } catch (e: PriResponseTimeoutException) {
+                    call.respond(HttpStatusCode.GatewayTimeout, e.message.orEmpty())
+                } catch (ex: Exception) {
+                    sikkerLogger().error("Feil ved henting av eksponerte forespørsler: ${ex.message}", ex)
+                    call.respond(HttpStatusCode.InternalServerError, "Feil ved henting av eksponerte forespørsler, prøv igjen senere")
+                }
+            }
+            post("/forkastForespoersel") {
+                val forkastForespoerselRequest = call.receive<ForkastForespoerselRequest>()
+                if (forkastForespoerselRequest.forespoerselId.isBlank()) {
+                    call.respond(HttpStatusCode.BadRequest, "forespoerselId må være utfylt")
+                    return@post
+                }
+                val forespoerselId =
+                    try {
+                        UUID.fromString(forkastForespoerselRequest.forespoerselId)
+                    } catch (_: IllegalArgumentException) {
+                        call.respond(HttpStatusCode.BadRequest, "forespoerselId må være en gyldig UUID")
+                        return@post
+                    }
+                try {
+                    forespoerselService.forkastForespoersel(
+                        forespoerselId,
+                        hentBrukernavnFraToken(),
+                    )
+                    call.respond(HttpStatusCode.OK)
+                } catch (ex: Exception) {
+                    sikkerLogger().error("Feil ved forkasting av forespørsel: ${ex.message}", ex)
+                    call.respond(HttpStatusCode.InternalServerError, "Feil ved forkasting av forespørsel, prøv igjen senere")
+                }
+            }
         }
     }
 }
+
+@Serializable
+internal data class HentEksponerteForespoerslerRequest(
+    val fnr: String,
+)
+
+@Serializable
+internal data class ForkastForespoerselRequest(
+    val forespoerselId: String,
+)
 
 private fun RoutingContext.hentBrukernavnFraToken(): String =
     call.request

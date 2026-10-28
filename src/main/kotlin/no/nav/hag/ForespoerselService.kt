@@ -2,13 +2,20 @@ package no.nav.hag
 
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import no.nav.hag.kafkaproducer.KafkaConfig.FORESPOERSEL_MANUELT_FORKASTET
-import no.nav.hag.kafkaproducer.KafkaConfig.HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID
-import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_BEHOV
-import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_ID
-import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_NOTIS
-import no.nav.hag.kafkaproducer.KafkaConfig.PRI_FELT_NAVN_VEDTAKSPERIODE_ID
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import no.nav.hag.kafka.KafkaConfig.FNR
+import no.nav.hag.kafka.KafkaConfig.FORESPOERSEL_MANUELT_FORKASTET
+import no.nav.hag.kafka.KafkaConfig.HENT_FORESPOERSLER_FOR_PERSON
+import no.nav.hag.kafka.KafkaConfig.HENT_FORESPOERSLER_FOR_VEDTAKSPERIODE_ID
+import no.nav.hag.kafka.KafkaConfig.PRI_FELT_NAVN_BEHOV
+import no.nav.hag.kafka.KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_ID
+import no.nav.hag.kafka.KafkaConfig.PRI_FELT_NAVN_NOTIS
+import no.nav.hag.kafka.KafkaConfig.PRI_FELT_NAVN_VEDTAKSPERIODE_ID
+import no.nav.hag.kafka.KafkaConfig.PRI_TOPIC
+import no.nav.hag.kafka.PriTopicResponses
 import no.nav.helsearbeidsgiver.utils.json.toJson
 import no.nav.helsearbeidsgiver.utils.json.toJsonStr
 import no.nav.helsearbeidsgiver.utils.log.logger
@@ -28,15 +35,17 @@ interface ForespoerselService {
         vedtaksperiodeId: UUID,
         brukernavn: String,
     )
+
+    suspend fun hentEksponerteForespoersler(fnr: String): List<JsonObject>
 }
 
 class ForespoerselServiceImpl(
     kafkaProducer: KafkaProducer<String, String>,
+    private val priTopicResponses: PriTopicResponses,
 ) : ForespoerselService {
     private val logger = this::class.logger()
     private val sikkerLogger = sikkerLogger()
     private val kafkaProducer = kafkaProducer
-    private val topic = "helsearbeidsgiver.pri"
 
     override suspend fun forkastForespoersel(
         foresporselId: UUID,
@@ -70,20 +79,37 @@ class ForespoerselServiceImpl(
         sendTilKafka(kafkaMessage, vedtaksperiodeId)
     }
 
+    override suspend fun hentEksponerteForespoersler(fnr: String): List<JsonObject> {
+        val kafkaMessage =
+            mapOf(
+                PRI_FELT_NAVN_BEHOV to HENT_FORESPOERSLER_FOR_PERSON.toJson(),
+                FNR to fnr.toJson(),
+            )
+        return priTopicResponses.request(fnr) {
+            sendTilKafka(kafkaMessage, fnr)
+        }
+    }
+
     private fun sendTilKafka(
         kafkaMessage: Map<String, JsonElement>,
         key: UUID,
+    ) = sendTilKafka(kafkaMessage, key.toString())
+
+    private fun sendTilKafka(
+        kafkaMessage: Map<String, JsonElement>,
+        key: String,
     ) {
         runCatching {
-            kafkaProducer.send(
-                ProducerRecord(
-                    topic,
-                    key.toString(),
-                    kafkaMessage.toJsonStr(
-                        MapSerializer(String.serializer(), JsonElement.serializer()),
+            kafkaProducer
+                .send(
+                    ProducerRecord(
+                        PRI_TOPIC,
+                        key,
+                        kafkaMessage.toJsonStr(
+                            MapSerializer(String.serializer(), JsonElement.serializer()),
+                        ),
                     ),
-                ),
-            )
+                ).get()
         }.onFailure { error ->
             sikkerLogger.error("Feilet under sending til kafka", error)
             logger.error("Feilet under sending til kafka")
@@ -108,4 +134,27 @@ class MockForespoerselService : ForespoerselService {
     ) {
         logger.info("Synkroniserer: $vedtaksperiodeId. Utført av $brukernavn")
     }
+
+    override suspend fun hentEksponerteForespoersler(fnr: String): List<JsonObject> =
+        List(3) {
+            JsonObject(
+                mapOf(
+                    "orgnr" to "810007842".toJson(),
+                    FNR to fnr.toJson(),
+                    PRI_FELT_NAVN_FORESPOERSEL_ID to UUID.randomUUID().toJson(),
+                    "vedtaksperiodeId" to UUID.randomUUID().toJson(),
+                    "erBesvart" to JsonPrimitive(it == 0),
+                    "erBegrenset" to JsonPrimitive(false),
+                    "sykmeldingsperioder" to
+                        JsonArray(
+                            listOf(
+                                JsonObject(mapOf("fom" to "2026-09-01".toJson(), "tom" to "2026-09-20".toJson())),
+                                JsonObject(mapOf("fom" to "2026-09-21".toJson(), "tom" to "2026-09-23".toJson())),
+                                JsonObject(mapOf("fom" to "2026-09-24".toJson(), "tom" to "2026-09-26".toJson())),
+                            ),
+                        ),
+                    "opprettet" to "2026-10-0${it + 1}T12:00:00".toJson(),
+                ),
+            )
+        }
 }
