@@ -1,6 +1,5 @@
 package no.nav.hag.kafka
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
@@ -26,30 +25,15 @@ class PriTopicResponses {
         sendRequest: () -> Unit,
     ): List<JsonObject> {
         val response = CompletableDeferred<List<JsonObject>>()
-        val lookupId = UUID.randomUUID()
         check(pending.putIfAbsent(fnr, response) == null) {
             "HentFSPforPerson: Det finnes allerede en ventende request for samme person."
         }
 
         try {
-            logger.info("HentFSPforPerson: sender oppslag, oppslagId={}", lookupId)
-            sikkerLogger.info("HentFSPforPerson: sender oppslag, oppslagId={}, fnr={}", lookupId, fnr)
             sendRequest()
-            logger.info("HentFSPforPerson: oppslag sendt, venter på svar, oppslagId={}", lookupId)
-            return withTimeout(RESPONSE_TIMEOUT_MILLIS.milliseconds) { response.await() }.also {
-                logger.info("HentFSPforPerson: oppslag fullført, oppslagId={}, antall={}", lookupId, it.size)
-            }
+            return withTimeout(RESPONSE_TIMEOUT_MILLIS.milliseconds) { response.await() }
         } catch (e: TimeoutCancellationException) {
-            logger.warn("HentFSPforPerson: tidsavbrudd etter {} ms, oppslagId={}", RESPONSE_TIMEOUT_MILLIS, lookupId)
-            sikkerLogger.warn("HentFSPforPerson: tidsavbrudd, oppslagId=$lookupId, fnr=$fnr", e)
             throw PriResponseTimeoutException()
-        } catch (e: CancellationException) {
-            logger.info("HentFSPforPerson: oppslag avbrutt, oppslagId={}", lookupId)
-            throw e
-        } catch (e: Exception) {
-            logger.error("HentFSPforPerson: oppslag feilet, oppslagId={}, feiltype={}", lookupId, e.javaClass.simpleName)
-            sikkerLogger.error("HentFSPforPerson: oppslag feilet, oppslagId=$lookupId, fnr=$fnr", e)
-            throw e
         } finally {
             pending.remove(fnr, response)
         }
@@ -69,29 +53,19 @@ class PriTopicResponses {
         if ((json[KafkaConfig.PRI_FELT_NAVN_NOTIS] as? JsonPrimitive)?.contentOrNull !=
             KafkaConfig.PRI_NOTIS_FORESPOERSEL_LISTE_FOR_PERSON
         ) {
-            logger.info("HentFSPforPerson: ignorerer PRI-melding med annen eller manglende notis")
             return
         }
 
-        logger.info("HentFSPforPerson: mottok svarmelding på PRI-topic")
         val fnr = (json[KafkaConfig.FNR] as? JsonPrimitive)?.contentOrNull
-        sikkerLogger.info(
-            "HentFSPforPerson: mottok svar, fnr={}, forespoersel_liste={}",
-            fnr,
-            json[KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_LISTE],
-        )
         if (fnr.isNullOrBlank()) {
             logger.warn("HentFSPforPerson: svar mangler fnr")
             return
         }
 
-        val response = pending[fnr]
-        if (response == null) {
-            logger.warn("HentFSPforPerson: svar matcher ikke et ventende oppslag")
-            sikkerLogger.warn("HentFSPforPerson: svar matcher ikke et ventende oppslag, fnr={}", fnr)
-            return
-        }
-        logger.info("HentFSPforPerson: svar matcher et ventende oppslag")
+        val response = pending[fnr] ?: return
+        sikkerLogger.info(
+            "HentFSPforPerson: mottok svar for fnr=$fnr, forespoersel_liste=${json[KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_LISTE]}",
+        )
         val forespoersler =
             try {
                 (json[KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_LISTE] as? JsonArray)
@@ -119,11 +93,7 @@ class PriTopicResponses {
                 return
             }
 
-        if (response.complete(forespoersler)) {
-            logger.info("HentFSPforPerson: svar levert til ventende oppslag, antall={}", forespoersler.size)
-        } else {
-            logger.warn("HentFSPforPerson: svar kunne ikke leveres, oppslaget er allerede avsluttet")
-        }
+        response.complete(forespoersler)
     }
 
     private companion object {
