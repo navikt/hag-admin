@@ -91,7 +91,7 @@ fun Application.configureRouting(
                         }
                         p {
                             a(href = "/forespoersler/") {
-                                +"Hent eksponerte forespørsler"
+                                +"Hent forespørsler"
                             }
                         }
                         p {
