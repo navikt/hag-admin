@@ -11,7 +11,7 @@ const forespoersel = {
   vedtaksperiodeId: "87654321-4321-4321-4321-cba987654321",
   opprettet: "2026-10-01T12:00:00",
   sykmeldingsperioder: [{ fom: "2026-09-01", tom: "2026-09-10" }, { fom: "2026-09-15", tom: "2026-09-30" }],
-  erBesvart: true,
+  status: "Besvart",
   erBegrenset: false,
   forespurtData: { inntekt: { paakrevd: true } },
 };
@@ -131,18 +131,24 @@ describe("Forespørselsoppslag", () => {
     expect(await screen.findByText(/"paakrevd": true/)).toBeVisible();
   });
 
-  it("viser «Ikke besvart» for ubesvarte forespørsler", async () => {
-    stubFetch(vi.fn().mockResolvedValue(new Response(JSON.stringify([{ ...forespoersel, erBesvart: false }]))));
+  it.each(["Aktiv", "Besvart", "Forkastet", "Ukjent"])("viser status %s og tillater forkasting bare for Aktiv", async (status) => {
+    stubFetch(vi.fn().mockResolvedValue(new Response(JSON.stringify([{ ...forespoersel, status }]))));
     render(<App />);
     await submitLookup();
-    expect(await screen.findByText("Ikke besvart")).toBeVisible();
+    expect(await screen.findByText(status)).toBeVisible();
+    const knapp = screen.queryByRole("button", { name: `Forkast forespørsel ${id}` });
+    if (status === "Aktiv") {
+      expect(knapp).toBeVisible();
+    } else {
+      expect(knapp).not.toBeInTheDocument();
+    }
   });
 
-  it("viser en kompakt forkast-knapp bare for ubesvarte forespørsler og beholder kortet etter forkasting", async () => {
+  it("viser en kompakt forkast-knapp for aktive forespørsler og oppdaterer status etter forkasting", async () => {
     const ubesvart = {
       ...forespoersel,
       forespoerselId: "aaaaaaaa-1234-1234-1234-123456789abc",
-      erBesvart: false,
+      status: "Aktiv",
     };
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify([forespoersel, ubesvart])))
@@ -165,10 +171,13 @@ describe("Forespørselsoppslag", () => {
     expect(await screen.findByRole("heading", { name: `Forespørsel ${ubesvart.forespoerselId}` })).toBeVisible();
     expect(screen.getByText("Forkastet")).toBeVisible();
     expect(screen.queryByRole("button", { name: `Forkast forespørsel ${ubesvart.forespoerselId}` })).not.toBeInTheDocument();
+    expect(screen.queryByText("Aktiv")).not.toBeInTheDocument();
+    const kort = screen.getByRole("article", { name: `Forespørsel ${ubesvart.forespoerselId}` });
+    expect(kort.querySelector("pre")).toHaveTextContent('"status": "Forkastet"');
   });
 
-  it("beholder en ubesvart forespørsel og viser en feilmelding hvis forkasting mislykkes", async () => {
-    const ubesvart = { ...forespoersel, erBesvart: false };
+  it("beholder aktiv status og viser en feilmelding hvis forkasting mislykkes", async () => {
+    const ubesvart = { ...forespoersel, status: "Aktiv" };
     stubFetch(
       vi.fn()
         .mockResolvedValueOnce(new Response(JSON.stringify([ubesvart])))
@@ -181,6 +190,8 @@ describe("Forespørselsoppslag", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Kunne ikke forkaste forespørselen.");
     expect(screen.getByRole("heading", { name: `Forespørsel ${id}` })).toBeVisible();
+    expect(screen.getByText("Aktiv")).toBeVisible();
+    expect(screen.getByRole("button", { name: `Forkast forespørsel ${id}` })).toBeEnabled();
   });
 
   it("sorterer forespørsler etter opprettelsestidspunkt", async () => {
@@ -196,6 +207,13 @@ describe("Forespørselsoppslag", () => {
 
   it("avviser forespørsler uten gyldig forespørsels-ID", async () => {
     stubFetch(vi.fn().mockResolvedValue(new Response(JSON.stringify([{ orgnr: "810007842" }]))));
+    render(<App />);
+    await submitLookup();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Mottok et ugyldig svar fra tjenesten.");
+  });
+
+  it.each([undefined, null, false, 1])("avviser forespørsler med ugyldig status %s", async (status) => {
+    stubFetch(vi.fn().mockResolvedValue(new Response(JSON.stringify([{ ...forespoersel, status }]))));
     render(<App />);
     await submitLookup();
     expect(await screen.findByRole("alert")).toHaveTextContent("Mottok et ugyldig svar fra tjenesten.");

@@ -143,7 +143,7 @@ class MockForespoerselService : ForespoerselService {
                     FNR to fnr.toJson(),
                     PRI_FELT_NAVN_FORESPOERSEL_ID to UUID.randomUUID().toJson(),
                     "vedtaksperiodeId" to UUID.randomUUID().toJson(),
-                    "erBesvart" to JsonPrimitive(it == 0),
+                    "status" to listOf("Besvart", "Aktiv", "Forkastet")[it].toJson(),
                     "erBegrenset" to JsonPrimitive(false),
                     "sykmeldingsperioder" to
                         JsonArray(
