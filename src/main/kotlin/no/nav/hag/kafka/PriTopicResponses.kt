@@ -19,15 +19,15 @@ import kotlin.time.Duration.Companion.milliseconds
 class PriTopicResponses {
     private val logger = this::class.logger()
     private val sikkerLogger = sikkerLogger()
-    private val pending = ConcurrentHashMap<String, CompletableDeferred<List<JsonObject>>>()
-    private val ventendeForkastinger = ConcurrentHashMap<UUID, CompletableDeferred<Unit>>()
+    private val forespoerselListeRespons = ConcurrentHashMap<String, CompletableDeferred<List<JsonObject>>>()
+    private val forkastetForespoerselRespons = ConcurrentHashMap<UUID, CompletableDeferred<Unit>>()
 
     suspend fun forkastForespoersel(
         forespoerselId: UUID,
         sendRequest: suspend () -> Unit,
     ) {
         val response = CompletableDeferred<Unit>()
-        check(ventendeForkastinger.putIfAbsent(forespoerselId, response) == null) {
+        check(forkastetForespoerselRespons.putIfAbsent(forespoerselId, response) == null) {
             "Det finnes allerede en ventende forkasting for samme forespørsel."
         }
         try {
@@ -50,7 +50,7 @@ class PriTopicResponses {
             sikkerLogger.error("Forkasting feilet, forespoerselId=$forespoerselId", e)
             throw e
         } finally {
-            ventendeForkastinger.remove(forespoerselId, response)
+            forkastetForespoerselRespons.remove(forespoerselId, response)
         }
     }
 
@@ -60,7 +60,7 @@ class PriTopicResponses {
     ): List<JsonObject> {
         val response = CompletableDeferred<List<JsonObject>>()
         val lookupId = UUID.randomUUID()
-        check(pending.putIfAbsent(fnr, response) == null) {
+        check(forespoerselListeRespons.putIfAbsent(fnr, response) == null) {
             "HentFSPforPerson: Det finnes allerede en ventende request for samme person."
         }
 
@@ -84,7 +84,7 @@ class PriTopicResponses {
             sikkerLogger.error("HentFSPforPerson: oppslag feilet, oppslagId=$lookupId, fnr=$fnr", e)
             throw e
         } finally {
-            pending.remove(fnr, response)
+            forespoerselListeRespons.remove(fnr, response)
         }
     }
 
@@ -123,7 +123,7 @@ class PriTopicResponses {
             return
         }
 
-        val response = pending[fnr]
+        val response = forespoerselListeRespons[fnr]
         if (response == null) {
             logger.warn("HentFSPforPerson: svar matcher ikke et ventende oppslag")
             sikkerLogger.warn("HentFSPforPerson: svar matcher ikke et ventende oppslag, fnr={}", fnr)
@@ -176,7 +176,7 @@ class PriTopicResponses {
                 sikkerLogger.warn("Bekreftelse på forkasting mangler gyldig forespoerselId", e)
                 return
             }
-        val response = ventendeForkastinger[forespoerselId]
+        val response = forkastetForespoerselRespons[forespoerselId]
         if (response == null) {
             logger.warn("Bekreftelse matcher ikke en ventende forkasting, forespoerselId={}", forespoerselId)
         } else if (!response.complete(Unit)) {
