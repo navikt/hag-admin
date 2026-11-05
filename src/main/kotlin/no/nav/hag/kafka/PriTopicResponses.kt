@@ -20,6 +20,39 @@ class PriTopicResponses {
     private val logger = this::class.logger()
     private val sikkerLogger = sikkerLogger()
     private val pending = ConcurrentHashMap<String, CompletableDeferred<List<JsonObject>>>()
+    private val ventendeForkastinger = ConcurrentHashMap<UUID, CompletableDeferred<Unit>>()
+
+    suspend fun forkastForespoersel(
+        forespoerselId: UUID,
+        sendRequest: suspend () -> Unit,
+    ) {
+        val response = CompletableDeferred<Unit>()
+        check(ventendeForkastinger.putIfAbsent(forespoerselId, response) == null) {
+            "Det finnes allerede en ventende forkasting for samme forespørsel."
+        }
+        try {
+            sendRequest()
+            logger.info("Venter på bekreftelse på forkasting, forespoerselId={}", forespoerselId)
+            withTimeout(RESPONSE_TIMEOUT_MILLIS.milliseconds) { response.await() }
+            logger.info("Forkasting bekreftet, forespoerselId={}", forespoerselId)
+        } catch (e: TimeoutCancellationException) {
+            logger.warn(
+                "Tidsavbrudd ved forkasting etter {} ms, forespoerselId={}",
+                RESPONSE_TIMEOUT_MILLIS,
+                forespoerselId,
+            )
+            throw PriResponseTimeoutException()
+        } catch (e: CancellationException) {
+            logger.info("Venting på forkasting avbrutt, forespoerselId={}", forespoerselId)
+            throw e
+        } catch (e: Exception) {
+            logger.error("Forkasting feilet, forespoerselId={}, feiltype={}", forespoerselId, e.javaClass.simpleName)
+            sikkerLogger.error("Forkasting feilet, forespoerselId=$forespoerselId", e)
+            throw e
+        } finally {
+            ventendeForkastinger.remove(forespoerselId, response)
+        }
+    }
 
     suspend fun request(
         fnr: String,
@@ -65,6 +98,11 @@ class PriTopicResponses {
                 sikkerLogger.warn("HentFSPforPerson: Ugyldig JSON-melding mottatt på PRI-topic", e)
                 return
             }
+
+        if ((json[KafkaConfig.PRI_FELT_NAVN_NOTIS] as? JsonPrimitive)?.contentOrNull == KafkaConfig.FORESPOERSEL_FORKASTET) {
+            mottaForkasting(json)
+            return
+        }
 
         if ((json[KafkaConfig.PRI_FELT_NAVN_NOTIS] as? JsonPrimitive)?.contentOrNull !=
             KafkaConfig.PRI_NOTIS_FORESPOERSEL_LISTE_FOR_PERSON
@@ -123,6 +161,26 @@ class PriTopicResponses {
             logger.info("HentFSPforPerson: svar levert til ventende oppslag, antall={}", forespoersler.size)
         } else {
             logger.warn("HentFSPforPerson: svar kunne ikke leveres, oppslaget er allerede avsluttet")
+        }
+    }
+
+    private fun mottaForkasting(json: JsonObject) {
+        val forespoerselId =
+            try {
+                UUID.fromString(
+                    (json[KafkaConfig.PRI_FELT_NAVN_FORESPOERSEL_ID] as? JsonPrimitive)?.contentOrNull
+                        ?: throw IllegalArgumentException("Mangler forespoerselId"),
+                )
+            } catch (e: IllegalArgumentException) {
+                logger.warn("Bekreftelse på forkasting mangler gyldig forespoerselId")
+                sikkerLogger.warn("Bekreftelse på forkasting mangler gyldig forespoerselId", e)
+                return
+            }
+        val response = ventendeForkastinger[forespoerselId]
+        if (response == null) {
+            logger.warn("Bekreftelse matcher ikke en ventende forkasting, forespoerselId={}", forespoerselId)
+        } else if (!response.complete(Unit)) {
+            logger.warn("Forkasting er allerede bekreftet, forespoerselId={}", forespoerselId)
         }
     }
 

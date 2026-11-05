@@ -311,8 +311,8 @@ fun Application.configureRouting(
                 try {
                     val forespoersler = forespoerselService.hentEksponerteForespoersler(request.fnr)
                     call.respond(HttpStatusCode.OK, JsonArray(forespoersler))
-                } catch (e: PriResponseTimeoutException) {
-                    call.respond(HttpStatusCode.GatewayTimeout, e.message.orEmpty())
+                } catch (_: PriResponseTimeoutException) {
+                    call.respond(HttpStatusCode.GatewayTimeout, "Tidsavbrudd ved henting av forespørsler. Prøv igjen senere.")
                 } catch (ex: Exception) {
                     sikkerLogger().error("Feil ved henting av eksponerte forespørsler: ${ex.message}", ex)
                     call.respond(HttpStatusCode.InternalServerError, "Feil ved henting av eksponerte forespørsler, prøv igjen senere")
@@ -332,11 +332,16 @@ fun Application.configureRouting(
                         return@post
                     }
                 try {
-                    forespoerselService.forkastForespoersel(
+                    forespoerselService.forkastForespoerselOgVentPaaBekreftelse(
                         forespoerselId,
                         hentBrukernavnFraToken(),
                     )
                     call.respond(HttpStatusCode.OK)
+                } catch (_: PriResponseTimeoutException) {
+                    call.respond(
+                        HttpStatusCode.GatewayTimeout,
+                        "Tidsavbrudd: Fikk ikke bekreftelse på forkasting. Hent forespørslene på nytt for å kontrollere status.",
+                    )
                 } catch (ex: Exception) {
                     sikkerLogger().error("Feil ved forkasting av forespørsel: ${ex.message}", ex)
                     call.respond(HttpStatusCode.InternalServerError, "Feil ved forkasting av forespørsel, prøv igjen senere")
