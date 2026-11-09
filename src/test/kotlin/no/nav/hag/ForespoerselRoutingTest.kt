@@ -42,14 +42,14 @@ class ForespoerselRoutingTest {
                         mapOf(
                             "forespoerselId" to UUID.randomUUID().toJson(),
                             "status" to "Aktiv".toJson(),
-                            "fnr" to fnr.toJson()
+                            "fnr" to fnr.toJson(),
                         ),
                     ),
                     JsonObject(
                         mapOf(
                             "forespoerselId" to UUID.randomUUID().toJson(),
                             "status" to "Forkastet".toJson(),
-                            "fnr" to fnr.toJson()
+                            "fnr" to fnr.toJson(),
                         ),
                     ),
                 )
