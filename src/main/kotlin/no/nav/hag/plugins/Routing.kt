@@ -315,7 +315,7 @@ fun Application.configureRouting(
                     sikkerLogger().error("Feil ved henting av eksponerte forespørsler: ${ex.message}", ex)
                     call.respond(
                         HttpStatusCode.InternalServerError,
-                        "Feil ved henting av eksponerte forespørsler, prøv igjen senere"
+                        "Feil ved henting av eksponerte forespørsler, prøv igjen senere",
                     )
                 }
             }
@@ -342,7 +342,7 @@ fun Application.configureRouting(
                     sikkerLogger().error("Feil ved forkasting av forespørsel: ${ex.message}", ex)
                     call.respond(
                         HttpStatusCode.InternalServerError,
-                        "Feil ved forkasting av forespørsel, prøv igjen senere"
+                        "Feil ved forkasting av forespørsel, prøv igjen senere",
                     )
                 }
             }
