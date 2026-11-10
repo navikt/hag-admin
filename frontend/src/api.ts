@@ -1,4 +1,4 @@
-export type Forespoersel = { forespoerselId: string } & Record<string, unknown>;
+export type Forespoersel = { forespoerselId: string; status: string } & Record<string, unknown>;
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -17,8 +17,8 @@ export async function hentBrukernavn(): Promise<string> {
 
 function erForespoersel(value: unknown): value is Forespoersel {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
-  const id = (value as Record<string, unknown>).forespoerselId;
-  return typeof id === "string" && uuid.test(id);
+  const { forespoerselId, status } = value as Record<string, unknown>;
+  return typeof forespoerselId === "string" && uuid.test(forespoerselId) && typeof status === "string";
 }
 
 export async function hentEksponerteForespoersler(fnr: string): Promise<Forespoersel[]> {

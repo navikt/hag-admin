@@ -28,6 +28,7 @@ function ForespoerselKort({forespoersel}: { forespoersel: Forespoersel }) {
     const [forkaster, setForkaster] = useState(false);
     const [forkastet, setForkastet] = useState(false);
     const [forkastFeil, setForkastFeil] = useState<string>();
+    const status = forkastet ? "Forkastet" : forespoersel.status;
 
     async function forkast() {
         setForkaster(true);
@@ -51,15 +52,13 @@ function ForespoerselKort({forespoersel}: { forespoersel: Forespoersel }) {
         <article className="card" aria-labelledby={`fsp-${forespoersel.forespoerselId}`}>
             <div className="card__top">
                 <Detail uppercase>Org.nr. {visVerdi(forespoersel.orgnr)}</Detail>
-                {typeof forespoersel.erBesvart === "boolean" && (
-                    <Tag
-                        variant="outline"
-                        size="small"
-                        data-color={forespoersel.erBesvart ? "success" : "warning"}
-                    >
-                        {forespoersel.erBesvart ? "Besvart" : "Ikke besvart"}
-                    </Tag>
-                )}
+                <Tag
+                    variant="outline"
+                    size="small"
+                    data-color={status === "Besvart" ? "success" : status === "Aktiv" ? "warning" : "neutral"}
+                >
+                    {status}
+                </Tag>
             </div>
             <Heading level="3" size="small" id={`fsp-${forespoersel.forespoerselId}`} className="card__title">
                 Forespørsel {forespoersel.forespoerselId}
@@ -71,9 +70,9 @@ function ForespoerselKort({forespoersel}: { forespoersel: Forespoersel }) {
             </div>
             <Detail>Opprettet {visDato(forespoersel.opprettet)}</Detail>
             <ReadMore header="Vis mer" size="small">
-                <pre className="json">{JSON.stringify(forespoersel, null, 2)}</pre>
+                <pre className="json">{JSON.stringify({...forespoersel, status}, null, 2)}</pre>
             </ReadMore>
-            {forespoersel.erBesvart === false && !forkastet && (
+            {status === "Aktiv" && (
                 <div className="card__actions">
                     <Button
                         variant="danger"
@@ -94,7 +93,6 @@ function ForespoerselKort({forespoersel}: { forespoersel: Forespoersel }) {
                     )}
                 </div>
             )}
-            {forkastet && <Tag variant="outline" size="small" data-color="neutral">Forkastet</Tag>}
         </article>
     );
 }

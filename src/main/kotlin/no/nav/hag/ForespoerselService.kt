@@ -31,6 +31,11 @@ interface ForespoerselService {
         brukernavn: String,
     )
 
+    suspend fun forkastForespoerselOgVentPaaBekreftelse(
+        foresporselId: UUID,
+        brukernavn: String,
+    )
+
     suspend fun synkroniserForesporsler(
         vedtaksperiodeId: UUID,
         brukernavn: String,
@@ -61,6 +66,15 @@ class ForespoerselServiceImpl(
                 PRI_FELT_NAVN_FORESPOERSEL_ID to foresporselId.toJson(),
             )
         sendTilKafka(kafkaMessage, foresporselId)
+    }
+
+    override suspend fun forkastForespoerselOgVentPaaBekreftelse(
+        foresporselId: UUID,
+        brukernavn: String,
+    ) {
+        priTopicResponses.forkastForespoersel(foresporselId) {
+            forkastForespoersel(foresporselId, brukernavn)
+        }
     }
 
     override suspend fun synkroniserForesporsler(
@@ -128,6 +142,13 @@ class MockForespoerselService : ForespoerselService {
         logger.info("Forkaster forespørsel: $foresporselId. Utført av $brukernavn")
     }
 
+    override suspend fun forkastForespoerselOgVentPaaBekreftelse(
+        foresporselId: UUID,
+        brukernavn: String,
+    ) {
+        forkastForespoersel(foresporselId, brukernavn)
+    }
+
     override suspend fun synkroniserForesporsler(
         vedtaksperiodeId: UUID,
         brukernavn: String,
@@ -143,7 +164,7 @@ class MockForespoerselService : ForespoerselService {
                     FNR to fnr.toJson(),
                     PRI_FELT_NAVN_FORESPOERSEL_ID to UUID.randomUUID().toJson(),
                     "vedtaksperiodeId" to UUID.randomUUID().toJson(),
-                    "erBesvart" to JsonPrimitive(it == 0),
+                    "status" to listOf("Besvart", "Aktiv", "Forkastet")[it].toJson(),
                     "erBegrenset" to JsonPrimitive(false),
                     "sykmeldingsperioder" to
                         JsonArray(
