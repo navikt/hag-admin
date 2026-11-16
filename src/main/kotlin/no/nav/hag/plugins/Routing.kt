@@ -5,7 +5,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.auth.authenticate
-import io.ktor.server.html.respondHtml
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.request.authorization
@@ -25,12 +24,6 @@ import kotlinx.css.backgroundColor
 import kotlinx.css.body
 import kotlinx.css.margin
 import kotlinx.css.px
-import kotlinx.html.a
-import kotlinx.html.body
-import kotlinx.html.h2
-import kotlinx.html.head
-import kotlinx.html.link
-import kotlinx.html.p
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import no.nav.hag.Env
@@ -70,32 +63,9 @@ fun Application.configureRouting(
             call.respond(appMicrometerRegistry.scrape())
         }
         authenticate {
-            staticResources("/forespoersler", "frontend")
+            staticResources("/", "frontend")
             get("/hentBrukernavn") {
                 call.respondText(hentBrukernavnFraToken())
-            }
-            get("/") {
-                val brukernavn = hentBrukernavnFraToken()
-                call.respondHtml(HttpStatusCode.OK) {
-                    head {
-                        link(rel = "stylesheet", href = "/styles.css", type = "text/css")
-                    }
-                    body {
-                        h2 {
-                            +"HAG Admin Tool"
-                        }
-                        p {
-                            text(
-                                "Logget inn som: $brukernavn",
-                            )
-                        }
-                        p {
-                            a(href = "/forespoersler/") {
-                                +"Hent forespørsler"
-                            }
-                        }
-                    }
-                }
             }
             post("/hentEksponerteForespoersler") {
                 val request =
