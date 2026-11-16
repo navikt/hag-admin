@@ -107,10 +107,8 @@ class ForespoerselRoutingTest {
             }
         }
         configureRouting(
-            notifikasjonService = mockk(relaxed = true),
             forespoerselService = service,
             appMicrometerRegistry = mockk(relaxed = true),
-            brregClient = mockk(relaxed = true),
         )
     }
 }
