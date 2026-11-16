@@ -18,7 +18,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import no.nav.hag.ForespoerselService
 import no.nav.helsearbeidsgiver.utils.log.sikkerLogger
-import java.util.*
+import java.util.UUID
 
 fun Application.configureRouting(
     forespoerselService: ForespoerselService,
