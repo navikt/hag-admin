@@ -103,4 +103,3 @@ private fun RoutingContext.hentBrukernavnFraToken(): String =
         .readClaim("NAVident")
         ?.asString()
         ?: "Ukjent bruker"
-
