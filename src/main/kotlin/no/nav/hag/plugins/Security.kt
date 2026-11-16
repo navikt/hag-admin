@@ -8,7 +8,7 @@ import io.ktor.server.auth.bearer
 import no.nav.hag.AuthClient
 import no.nav.hag.Env
 
-const val GROUP_ID_HAG = "e3ab1801-e5a6-48ca-9c3b-5a91ce182c57"
+const val GROUP_ID_HAG = "dda4c4ed-1820-4b25-920f-eb2f54e19d8b"
 
 fun Application.configureSecurity(
     authClient: AuthClient,
