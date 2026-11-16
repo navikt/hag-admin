@@ -1,4 +1,4 @@
-login: true
+login: false
 kafkaPool: nav-dev
 env:
   - name: ARBEIDSGIVER_NOTIFIKASJON_SCOPE
