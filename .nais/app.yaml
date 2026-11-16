@@ -14,7 +14,7 @@ spec:
       allowAllUsers: false
       claims:
         groups:
-          - id: e3ab1801-e5a6-48ca-9c3b-5a91ce182c57
+          - id: dda4c4ed-1820-4b25-920f-eb2f54e19d8b
     sidecar:
       enabled: true
       autoLogin: true
