@@ -37,14 +37,9 @@ class ApplicationTest {
                     .sign(Algorithm.HMAC256("super secret"))
 
             coEvery { authClient.introspect(mockToken) } returns true
-            val brregClient =
-                BrregClient(
-                    "https://data.brreg.no/enhetsregisteret/api/underenheter",
-                    cacheConfig = LocalCache.Config(7.days, 10_000),
-                )
             application {
                 configureSecurity(authClient, disabled = false)
-                configureRouting(FakeServiceImpl(), MockForespoerselService(), appMicrometerRegistry, brregClient)
+                configureRouting(MockForespoerselService(), appMicrometerRegistry)
             }
 
             client

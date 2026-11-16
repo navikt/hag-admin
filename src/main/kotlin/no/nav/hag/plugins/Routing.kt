@@ -1,15 +1,12 @@
 package no.nav.hag.plugins
 
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationCall
 import io.ktor.server.auth.authenticate
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.request.authorization
 import io.ktor.server.request.receive
-import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.RoutingContext
@@ -17,48 +14,17 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.micrometer.prometheus.PrometheusMeterRegistry
-import kotlinx.css.Color
-import kotlinx.css.CssBuilder
-import kotlinx.css.Margin
-import kotlinx.css.backgroundColor
-import kotlinx.css.body
-import kotlinx.css.margin
-import kotlinx.css.px
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
-import no.nav.hag.Env
 import no.nav.hag.ForespoerselService
-import no.nav.hag.NotifikasjonService
-import no.nav.hag.domain.ForespoerselListe
-import no.nav.hag.domain.NotifikasjonBatcher
-import no.nav.hag.domain.Resultat
-import no.nav.hag.domain.Status
-import no.nav.hag.kafka.PriResponseTimeoutException
-import no.nav.helsearbeidsgiver.brreg.BrregClient
-import no.nav.helsearbeidsgiver.utils.log.logger
 import no.nav.helsearbeidsgiver.utils.log.sikkerLogger
-import java.util.UUID
+import java.util.*
 
 fun Application.configureRouting(
-    notifikasjonService: NotifikasjonService,
     forespoerselService: ForespoerselService,
     appMicrometerRegistry: PrometheusMeterRegistry,
-    brregClient: BrregClient,
 ) {
     routing {
-        staticResources("/admin-ui", "admin-ui")
-        get("/styles.css") {
-            call.respondCss {
-                body {
-                    if (Env.isTest()) {
-                        backgroundColor = Color.mediumSeaGreen
-                    } else {
-                        backgroundColor = Color.indianRed
-                    }
-                    margin = Margin(0.px)
-                }
-            }
-        }
         get("/metrics") {
             call.respond(appMicrometerRegistry.scrape())
         }
@@ -138,6 +104,3 @@ private fun RoutingContext.hentBrukernavnFraToken(): String =
         ?.asString()
         ?: "Ukjent bruker"
 
-suspend inline fun ApplicationCall.respondCss(builder: CssBuilder.() -> Unit) {
-    this.respondText(CssBuilder().apply(builder).toString(), ContentType.Text.CSS)
-}
