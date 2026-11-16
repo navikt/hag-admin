@@ -60,6 +60,13 @@ fun Application.module() {
             },
         )
     }
+    val tokenGetter = authClient.tokenGetter(Env.agNotifikasjonScope)
+    val agNotifikasjonKlient =
+        ArbeidsgiverNotifikasjonKlient(
+            url = Env.agNotifikasjonUrl,
+            getAccessToken = tokenGetter,
+            sendevindu = Sendevindu.NKS_AAPNINGSTID,
+        )
 
     val priTopicResponses = PriTopicResponses()
     val forespoerselService =
@@ -68,7 +75,18 @@ fun Application.module() {
             else -> ForespoerselServiceImpl(KafkaConfig.getKafkaProducer(), priTopicResponses)
         }
 
-    configureRouting(forespoerselService, appMicrometerRegistry)
+    val notifikasjonService =
+        when {
+            Env.isLocal() -> FakeServiceImpl()
+            else -> NotifikasjonServiceImpl(agNotifikasjonKlient, Env.utgaattUrl)
+        }
+
+    val brregClient =
+        BrregClient(
+            "https://data.brreg.no/enhetsregisteret/api/underenheter",
+            cacheConfig = LocalCache.Config(7.days, 10_000),
+        )
+    configureRouting(notifikasjonService, forespoerselService, appMicrometerRegistry, brregClient)
 
     if (!Env.isLocal()) {
         val priTopicConsumer = PriTopicConsumer(priTopicResponses)
