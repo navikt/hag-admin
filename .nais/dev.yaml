@@ -6,4 +6,4 @@ env:
   - name: SAK_UTGAATT_URL
     value: "https://arbeidsgiver.ekstern.dev.nav.no/im-dialog/utgatt"
 ingresses:
-  - https://hag-admin.intern.dev.nav.no
+  - https://hag-admin.ansatt.dev.nav.no
