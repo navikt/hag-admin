@@ -14,7 +14,7 @@ Som en del av denne midlertidige løsningen, er en del interne funksjoner fjerne
 
 Frontend for `hentEksponerteForespoersler` ligger som et eget npm-prosjekt i
 `frontend/`, med React, TypeScript, Vite og NAVs designsystem Aksel.
-Siden er tilgjengelig på `/forespoersler/` og fra forsiden til HAG Admin.
+Siden er forsiden til HAG Admin og er tilgjengelig på `/`.
 
 `./gradlew build` laster ned Node, installerer låste npm-avhengigheter, bygger
 frontenden og pakker den inn i backend-JAR-en. Ktor serverer både frontend og API;
